@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "英语动画播放器后端服务",
+  "main": "index.js",
+  "scripts": {
+    "start": "node course-materials.js",
+    "dev": "node --watch course-materials.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.17.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}

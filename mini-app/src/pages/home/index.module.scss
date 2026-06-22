@@ -1,0 +1,324 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background-color: #FFFDF5; /* 恢复柔和的暖米色背景 */
+  background-image: radial-gradient(#FFE270 2px, transparent 2px); /* 添加可爱的波点背景 */
+  background-size: 40rpx 40rpx;
+  padding: calc($page-padding + env(safe-area-inset-top)) $page-padding $page-padding;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+  padding-top: $spacing-md;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 100rpx; /* 变回胶囊形 */
+  padding: 12rpx 32rpx 12rpx 12rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 209, 59, 0.3);
+  display: inline-flex; /* 让它宽度自适应内容 */
+  border: 4rpx solid #FFD13B;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  border: 4rpx solid #FFFFFF;
+  margin-right: $spacing-md;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.greeting {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #FF7D00;
+  letter-spacing: 2rpx;
+}
+
+.subtitle {
+  font-size: 22rpx;
+  color: #8C5A00;
+  margin-top: 4rpx;
+  font-weight: bold;
+}
+
+.scanSection {
+  margin-bottom: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scanButton {
+  @include button-reset;
+  width: 100%;
+  height: 140rpx;
+  background: linear-gradient(180deg, #FFD13B 0%, #FFB100 100%); /* 温暖的渐变色 */
+  border-radius: 70rpx; /* 全圆角 */
+  box-shadow: 0 16rpx 32rpx rgba(255, 125, 0, 0.3), inset 0 6rpx 12rpx rgba(255, 255, 255, 0.6); /* 拟物发光阴影 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-sm;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 软糯的弹性动画 */
+  border: 6rpx solid #FFF;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 4rpx 12rpx rgba(255, 125, 0, 0.2), inset 0 2rpx 4rpx rgba(255, 255, 255, 0.4);
+  }
+}
+
+.scanIcon {
+  font-size: 56rpx;
+  margin-right: $spacing-sm;
+}
+
+.scanText {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #FFFFFF;
+  text-shadow: 0 4rpx 8rpx rgba(200, 80, 0, 0.5); /* 文字投影 */
+}
+
+.scanTip {
+  font-size: 22rpx;
+  color: #8C5A00;
+  font-weight: bold;
+  background: rgba(255, 209, 59, 0.3);
+  padding: 8rpx 24rpx;
+  border-radius: 30rpx;
+}
+
+.listSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 0; /* 让 ScrollView 正确接管高度 */
+}
+
+.sectionTitle {
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #FF7D00;
+  margin-bottom: $spacing-md;
+}
+
+.gridContainer {
+  flex: 1;
+  width: 100%;
+}
+
+/* 隐藏滚动条 (兼容各种环境) */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.card {
+  width: 48%;
+  background: #FFFFFF;
+  border-radius: 40rpx; /* 大圆角卡片 */
+  padding: $spacing-sm;
+  box-sizing: border-box;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 12rpx 32rpx rgba(255, 209, 59, 0.15); /* 柔和的发光阴影 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 4rpx solid #FFFFFF;
+
+  &:active {
+    transform: scale(0.95);
+    border-color: #FFD13B;
+  }
+}
+
+.lockedCard {
+  background: #F5F6F7;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+  .animTitle {
+    color: $color-text-tertiary;
+  }
+}
+
+.coverWrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 32rpx; /* 内部图片大圆角 */
+  overflow: hidden;
+  margin-bottom: $spacing-sm;
+  position: relative;
+  background: #E5E6EB;
+}
+
+.cover {
+  width: 100%;
+  height: 100%;
+}
+
+.lockOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7); /* 柔和的白色遮罩 */
+  backdrop-filter: blur(4rpx);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lockIcon {
+  font-size: 72rpx;
+  filter: drop-shadow(0 4rpx 8rpx rgba(0,0,0,0.2));
+}
+
+.animTitle {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: $color-text-primary;
+  text-align: center;
+  margin-bottom: $spacing-sm;
+  line-height: 1.4;
+  @include text-ellipsis-multi(2);
+  width: 100%;
+  min-height: 76rpx; 
+}
+
+.playBadge {
+  background: #FFD13B;
+  color: #8C5A00;
+  font-size: 24rpx;
+  font-weight: 900;
+  padding: 12rpx 32rpx;
+  border-radius: 40rpx;
+  width: auto; /* 不再占满，恢复胶囊形 */
+  text-align: center;
+  box-shadow: 0 4rpx 12rpx rgba(255, 209, 59, 0.4);
+}
+
+.lockedBadge {
+  background: #E5E6EB;
+  color: $color-text-tertiary;
+  font-size: 24rpx;
+  font-weight: 900;
+  padding: 12rpx 32rpx;
+  border-radius: 40rpx;
+  width: auto;
+}
+
+/* 弹窗样式 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  width: 80%;
+  background: #FFFDF5;
+  border-radius: 40rpx;
+  padding: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.2);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modalTitle {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #1A2980;
+  margin-bottom: $spacing-sm;
+}
+
+.modalDesc {
+  font-size: 24rpx;
+  color: #888;
+  text-align: center;
+  margin-bottom: $spacing-xl;
+}
+
+.keyInput {
+  width: 100%;
+  height: 88rpx;
+  background: #FFFFFF;
+  border: 4rpx solid #E0E0E0;
+  border-radius: 24rpx;
+  padding: 0 $spacing-md;
+  font-size: 28rpx;
+  color: #333;
+  text-align: center;
+  margin-bottom: $spacing-xl;
+  
+  &:focus {
+    border-color: #FF7D00;
+  }
+}
+
+.modalBtns {
+  display: flex;
+  width: 100%;
+  gap: $spacing-md;
+}
+
+.cancelBtn, .confirmBtn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.cancelBtn {
+  background: #F0F0F0;
+  color: #888;
+}
+
+.confirmBtn {
+  background: linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(255, 125, 0, 0.3);
+}

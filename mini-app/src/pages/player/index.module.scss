@@ -1,0 +1,292 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background-color: #FFFDF5; // 更柔和的儿童背景
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: $spacing-md;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn {
+  width: 80rpx;
+  height: 80rpx;
+  background: #FFF;
+  border-radius: $radius-round;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.backIcon {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: $color-text-primary;
+}
+
+.seriesTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.scoreBadge {
+  display: flex;
+  align-items: center;
+  background: #FFF0E0;
+  padding: 8rpx 24rpx;
+  border-radius: $radius-button;
+  border: 4rpx solid #FFD13B;
+}
+
+.scoreIcon {
+  font-size: 36rpx;
+  margin-right: 8rpx;
+}
+
+.scoreText {
+  color: #FF7D00;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+}
+
+.playerWrapper {
+  width: 100%;
+  padding: 0 $spacing-md;
+  box-sizing: border-box;
+  margin-bottom: $spacing-lg;
+}
+
+.loading {
+  width: 100%;
+  height: 400rpx;
+  background: #E5E6EB;
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+}
+
+.loadingSpinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #FFF;
+  border-top-color: #FFD13B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 选集区域 */
+.episodeSection {
+  flex: 1;
+  background: #FFFFFF;
+  border-top-left-radius: 40rpx;
+  border-top-right-radius: 40rpx;
+  padding: $spacing-lg;
+  padding-bottom: env(safe-area-inset-bottom); /* 适配底部安全区 */
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+  flex-shrink: 0;
+}
+
+.episodeList {
+  width: 100%;
+  flex: 1; /* 让滚动区域自动填满剩余空间 */
+  height: 0; /* 配合 flex: 1 使用，避免高度溢出 */
+}
+
+.episodeCard {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  border-radius: $radius-lg;
+  background: #F5F6F7;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 4rpx solid transparent;
+  padding: $spacing-sm;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.activeEpisode {
+  background: #FFF9E6;
+  border-color: #FFD13B;
+}
+
+.episodeCover {
+  width: 200rpx;
+  height: 150rpx;
+  position: relative;
+  flex-shrink: 0;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+}
+
+.playingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 209, 59, 0.8);
+  color: #8C5A00;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-md;
+}
+
+.progressContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8rpx;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.progressBar {
+  height: 100%;
+  background: #FF7D00;
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.episodeInfo {
+  flex: 1;
+  padding-left: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.episodeName {
+  font-size: $font-size-md; /* 加大字体 */
+  color: $color-text-primary;
+  font-weight: $font-weight-bold;
+  @include text-ellipsis-multi(2);
+  white-space: normal;
+  margin-bottom: $spacing-xs;
+}
+
+.episodeMeta {
+  display: flex;
+  align-items: center;
+}
+
+.playCount {
+  font-size: $font-size-xs;
+  color: #00B42A;
+  background: rgba(0, 180, 42, 0.1);
+  padding: 2rpx 12rpx;
+  border-radius: 20rpx;
+}
+
+/* 观后复习弹窗 */
+.reviewModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $page-padding;
+  box-sizing: border-box;
+}
+
+.reviewContent {
+  background: #FFFFFF;
+  width: 100%;
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: $shadow-popup;
+}
+
+.reviewTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  text-align: center;
+}
+
+.reviewSubtitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-warning;
+  margin-bottom: $spacing-lg;
+}
+
+.reviewVideo {
+  width: 100%;
+  height: 350rpx;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+  background: #000;
+}
+
+.reviewTip {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-xl;
+  text-align: center;
+}
+
+.closeBtn {
+  @include button-reset;
+  width: 80%;
+  height: $button-height-lg;
+  background: $color-primary;
+  color: $color-text-primary;
+  border-radius: $radius-button;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+
+  &:active {
+    opacity: 0.8;
+  }
+}

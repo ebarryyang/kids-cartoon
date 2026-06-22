@@ -1,0 +1,40 @@
+[10:08:38.067] Try reusing port from lock file: 7198
+[10:08:38.154] Server listening on port 7198, PID 45048
+[10:08:38.172] readProjectFiles, Found 46 files to read.
+[10:08:38.234] [Preview Server] Frontend connected, clients size = 1
+[10:08:38.514] Starting PAI Cloud Dev...
+[10:08:39.542] [PAI SDK] createCloudSession response: {
+  "code": 0,
+  "msg": "success",
+  "sandboxId": "vefaas-f0vkicge-pyw70jixna-d8n0q902032lkmogku9g-sandbox",
+  "endpoint": "https://sd62opo6oqou1ckhsuo00.apigateway-cn-beijing.volceapi.com"
+}
+[10:08:39.676] [PAI SDK] cloudServer.start called, appId: pai-preview-trae-90598351
+[10:08:40.195] [PAI SDK] Received event: log {"content":"\n> taro_template@1.0.0 dev:h5\n> npm run build:h5 -- --watch\n\n\n> taro_template@1.0.0 build:h5\n> taro build --type h5 --watch\n\n","timestamp":1781402917469}
+[10:08:40.504] [PAI SDK] Received event: log {"content":"👽 Taro v4.1.9\n\n","timestamp":1781402917806}
+[10:08:41.717] [PAI SDK] Received event: log {"content":"Tips:\n1. 建议开启持久化缓存功能，能有效提升二次编译速度，详情请参考: https://docs.taro.zone/docs/config-detail#cache。\n\n\n","timestamp":1781402919019}
+[10:08:42.848] [PAI SDK] Received event: log {"content":"- 即将开始启动编译，请稍等~\n","timestamp":1781402920086}
+[10:08:46.932] [Preview Server] Frontend disconnected, clients size = 1
+[10:08:47.401] [Preview Server] Frontend connected, clients size = 1
+[10:08:57.389] [PAI SDK] Received event: log {"content":"✅  编译成功 6/14/2026, 10:08:54 AM\n\n","timestamp":1781402934675}
+[10:08:57.390] [PAI SDK] cloudServer.start response: {
+  "status": "running",
+  "msg": "Cloud Server started successfully.",
+  "hash": "pai-preview-trae-90598351"
+}
+[10:08:57.474] [PAI SDK] Received event: log {"content":"\nℹ️  Listening at http://9.105.168.92:10086/\n\n监听文件修改中...\n\n","timestamp":1781402934777}
+[12:02:21.972] [Preview Server] Frontend disconnected, clients size = 1
+[12:02:22.182] Heartbeat timeout.
+[12:02:22.184] Shutting down...
+[12:02:23.710] Stopping Cloud Dev...
+[12:02:25.999] [PAI SDK] stopCloudServer error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:15845:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  [cause]: Error: getaddrinfo ENOTFOUND pai.mobile.volcapp.com
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'pai.mobile.volcapp.com'
+  }
+}

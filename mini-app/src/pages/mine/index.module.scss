@@ -1,0 +1,486 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  /* 柔和的深蓝色星空渐变背景 */
+  background: linear-gradient(180deg, #1A2980 0%, #26D0CE 100%);
+  padding: calc($page-padding + env(safe-area-inset-top)) $page-padding $page-padding;
+  box-sizing: border-box;
+}
+
+@mixin glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 40rpx;
+  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.1), inset 0 2rpx 0 rgba(255, 255, 255, 1);
+  border: 4rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.profileCard {
+  @include glass-card;
+  padding: $spacing-lg;
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+}
+
+.avatar {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  border: 6rpx solid #FFFFFF;
+  margin-right: $spacing-md;
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.15);
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden; /* 防止文字过长溢出 */
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+  width: 100%;
+}
+
+.name {
+  font-size: 44rpx;
+  font-weight: 900;
+  color: #1A2980;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 昵称过长显示省略号，保证单行 */
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.age {
+  font-size: 24rpx;
+  color: #FFFFFF;
+  background: linear-gradient(90deg, #FF7D00, #FFAE00);
+  padding: 6rpx 20rpx;
+  border-radius: 30rpx;
+  font-weight: 900;
+  box-shadow: 0 4rpx 12rpx rgba(255, 125, 0, 0.3);
+}
+
+.editBtn {
+  @include button-reset;
+  background: rgba(26, 41, 128, 0.08);
+  color: #1A2980;
+  padding: 0 24rpx;
+  height: 48rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border: 2rpx solid rgba(26, 41, 128, 0.1);
+
+  &:active {
+    transform: scale(0.95);
+    background: rgba(26, 41, 128, 0.15);
+  }
+}
+
+.section {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.driveCard {
+  @include glass-card;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.driveInfo {
+  display: flex;
+  align-items: center;
+  flex: 1; /* 让文本区域占据剩余空间 */
+  overflow: hidden; /* 防止溢出 */
+}
+
+.driveIcon {
+  font-size: 72rpx;
+  margin-right: $spacing-md;
+  filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.1));
+}
+
+.driveText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.driveName {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #1A2980;
+  margin-bottom: 4rpx;
+  white-space: nowrap; /* 强制单行 */
+}
+
+.driveDesc {
+  font-size: 20rpx;
+  color: #666;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bindBtn {
+  @include button-reset;
+  background: linear-gradient(180deg, #43B047 0%, #328E35 100%);
+  color: #FFFFFF;
+  padding: 0 32rpx;
+  height: 54rpx; /* 缩小25% (原来72) */
+  border-radius: 27rpx;
+  font-size: 22rpx; /* 缩小字号 */
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8rpx 16rpx rgba(67, 176, 71, 0.3);
+  border: 4rpx solid #FFF;
+  flex-shrink: 0; /* 防止按钮被挤压 */
+  margin-left: 16rpx;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.boundBtn {
+  @include button-reset;
+  background: rgba(229, 230, 235, 0.8);
+  color: #888;
+  padding: 0 32rpx;
+  height: 54rpx; /* 缩小25% (原来72) */
+  border-radius: 27rpx;
+  font-size: 22rpx; /* 缩小字号 */
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* 防止按钮被挤压 */
+  margin-left: 16rpx;
+}
+
+.menuList {
+  @include glass-card;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 2rpx solid rgba(0, 0, 0, 0.05);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.menuIcon {
+  font-size: 48rpx;
+  margin-right: $spacing-md;
+}
+
+.menuText {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #1A2980;
+}
+
+.arrow {
+  color: #A0A0A0;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.mascotWrapper {
+  position: absolute;
+  bottom: calc(180rpx + env(safe-area-inset-bottom));
+  right: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10rpx); }
+  100% { transform: translateY(0); }
+}
+
+.mascotImg {
+  width: 200rpx;
+  height: 200rpx;
+  /* 美式复古动画风格 (Rubber Hose Style) 的黑白老鼠头/米奇风 */
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="55" r="35" fill="%23000"/><circle cx="25" cy="25" r="20" fill="%23000"/><circle cx="75" cy="25" r="20" fill="%23000"/><path d="M 30 50 Q 50 20 70 50 Q 80 80 50 85 Q 20 80 30 50 Z" fill="%23FFF"/><ellipse cx="40" cy="45" rx="4" ry="12" fill="%23000"/><ellipse cx="60" cy="45" rx="4" ry="12" fill="%23000"/><path d="M 40 65 Q 50 80 60 65" fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round"/><ellipse cx="50" cy="55" rx="8" ry="4" fill="%23000"/></svg>') no-repeat center center;
+  background-size: contain;
+  filter: drop-shadow(0 8rpx 16rpx rgba(0, 0, 0, 0.3));
+}
+
+.bubble {
+  position: absolute;
+  top: -40rpx;
+  right: 140rpx;
+  background: #FFFFFF;
+  padding: 12rpx 24rpx;
+  border-radius: 40rpx 40rpx 0 40rpx; /* 美式漫画常用气泡形状 */
+  box-shadow: 6rpx 6rpx 0px #000; /* 美式漫画硬阴影 */
+  border: 4rpx solid #000;
+  transform: rotate(-5deg); /* 俏皮的倾斜 */
+  
+  Text {
+    font-size: 24rpx;
+    font-weight: 900;
+    color: #E52521; /* 经典美漫红 */
+    font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif; /* 配合粗体英文字体 */
+    text-transform: uppercase;
+    letter-spacing: 2rpx;
+  }
+}
+
+.importCard {
+  @include glass-card;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-md;
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.disabledCard {
+  opacity: 0.5;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+.importInfo {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.importIconWrapper {
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  box-shadow: 0 4rpx 12rpx rgba(255, 125, 0, 0.3);
+}
+
+.importIcon {
+  font-size: 40rpx;
+}
+
+.importText {
+  display: flex;
+  flex-direction: column;
+}
+
+.importTitle {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #1A2980;
+  margin-bottom: 4rpx;
+}
+
+.importDesc {
+  font-size: 20rpx;
+  color: #666;
+  font-weight: bold;
+}
+
+/* 弹窗样式 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+}
+
+.modalContent {
+  width: 100%;
+  background: #FFFDF5;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: $spacing-xl $page-padding calc($spacing-xl + env(safe-area-inset-bottom) + 80rpx); /* 增加了底部留白，确保按钮不会被系统栏遮挡 */
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease-out forwards;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh; /* 限制弹窗最大高度 */
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #1A2980;
+}
+
+.closeBtn {
+  font-size: 40rpx;
+  color: #A0A0A0;
+  padding: 10rpx;
+}
+
+.fileList {
+  flex: 1; /* 让列表自适应剩余高度 */
+  overflow-y: auto;
+  margin-bottom: $spacing-xl;
+  min-height: 300rpx; /* 保证有一个基础高度 */
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  margin-bottom: $spacing-md;
+  border: 4rpx solid transparent;
+  transition: all 0.2s;
+
+  &:active {
+    background: #F8F9FA;
+  }
+}
+
+.folderIcon {
+  font-size: 60rpx;
+  margin-right: $spacing-md;
+}
+
+.folderInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.folderName {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+
+.folderDesc {
+  font-size: 22rpx;
+  color: #888;
+}
+
+.radioChecked {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #43B047;
+  border: 4rpx solid #43B047;
+  position: relative;
+  flex-shrink: 0;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 12rpx;
+    height: 20rpx;
+    border-right: 4rpx solid #FFF;
+    border-bottom: 4rpx solid #FFF;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%) rotate(45deg);
+  }
+}
+
+.radioUnchecked {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  border: 4rpx solid #DDD;
+  flex-shrink: 0;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0; /* 防止底部按钮区域被挤压 */
+  margin-top: auto;
+}
+
+.confirmImportBtn {
+  background: linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%);
+  color: #FFFFFF;
+  width: 100%;
+  height: 96rpx; /* 加大按钮高度 */
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 900;
+  box-shadow: 0 8rpx 16rpx rgba(255, 125, 0, 0.3);
+
+  &:active {
+    transform: scale(0.98);
+  }
+}

@@ -1,0 +1,148 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  background-color: #FFFDF5;
+  padding: calc($page-padding + env(safe-area-inset-top)) $page-padding $page-padding;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+  display: flex;
+  justify-content: center;
+}
+
+.scoreBoard {
+  background: linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%);
+  border-radius: 40rpx;
+  padding: 40rpx 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 16rpx 32rpx rgba(255, 125, 0, 0.3);
+  border: 6rpx solid #FFFFFF;
+}
+
+.scoreNum {
+  font-size: 100rpx;
+  font-weight: 900;
+  color: #FFFFFF;
+  text-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.2);
+  line-height: 1;
+  margin-bottom: 8rpx;
+}
+
+.scoreLabel {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.medalSection {
+  flex: 1;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  margin-top: -40rpx; /* 让内容稍微上移，与头部圆角交叠 */
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  text-align: center;
+}
+
+.medalScroll {
+  flex: 1;
+  height: 0; /* 配合 flex: 1 使用 */
+}
+
+.medalGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.medalCard {
+  width: 48%;
+  background: #FFFFFF;
+  border-radius: 40rpx;
+  padding: $spacing-md $spacing-sm;
+  box-sizing: border-box;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  border: 4rpx solid transparent;
+}
+
+.medalLocked {
+  background: #F5F6F7;
+  .medalIconWrapper {
+    filter: grayscale(1);
+    opacity: 0.5;
+    background: #E5E6EB;
+    border-color: #C9CDD4;
+  }
+  .medalName {
+    color: $color-text-secondary;
+  }
+}
+
+.medalIconWrapper {
+  width: 120rpx;
+  height: 120rpx;
+  background: #FFF9E6;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  border: 6rpx solid #FFD13B;
+  box-shadow: inset 0 4rpx 8rpx rgba(255, 255, 255, 0.8), 0 4rpx 12rpx rgba(255, 209, 59, 0.4);
+}
+
+.medalIcon {
+  font-size: 64rpx;
+}
+
+.medalName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.medalDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+  margin-bottom: $spacing-md;
+}
+
+.lockedBadge {
+  background: #E5E6EB;
+  color: $color-text-secondary;
+  font-size: 20rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.unlockedBadge {
+  background: #FFF0E0;
+  color: #FF7D00;
+  font-size: 20rpx;
+  font-weight: bold;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid #FF7D00;
+}
