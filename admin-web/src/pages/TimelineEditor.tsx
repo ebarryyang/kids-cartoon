@@ -41,7 +41,7 @@ export default function TimelineEditor() {
       try {
         const urlObj = new URL(url);
         // 将真正的 CDN 域名（例如 xafj-ct11.baidupcs.com）替换为本地代理前缀
-        return `/baidu-cdn${urlObj.pathname}${urlObj.search}`;
+        return `/api/baidu-cdn${urlObj.pathname}${urlObj.search}`;
       } catch (e) {
         return url;
       }

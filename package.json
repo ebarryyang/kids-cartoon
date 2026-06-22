@@ -1,0 +1,10 @@
+{
+  "name": "kids-cartoon",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.6",
+    "axios": "^1.17.0"
+  }
+}

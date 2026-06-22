@@ -5,7 +5,7 @@ export const SECRET_KEY = 'Ig5e7CeRvJDKhfsuZoueUyqkxUYPWnH8'; // 仅用于本地
 
 // OOB 授权换取 Token
 export const getTokenWithCode = async (code: string) => {
-  const url = `/baidu-oauth/oauth/2.0/token?grant_type=authorization_code&code=${code}&client_id=${APP_KEY}&client_secret=${SECRET_KEY}&redirect_uri=oob`;
+  const url = `/api/baidu-token?grant_type=authorization_code&code=${code}&client_id=${APP_KEY}&client_secret=${SECRET_KEY}&redirect_uri=oob`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -53,7 +53,7 @@ export const getProxiedVideoUrl = (cdnUrl: string) => {
   if (!cdnUrl) return '';
   if (cdnUrl.includes('baidupcs.com')) {
     // 终极杀手锏：直接把请求转发给本地 Python 代理服务器处理
-    return `http://127.0.0.1:8080/proxy_video?url=${encodeURIComponent(cdnUrl)}`;
+    return `/api/proxy-video?url=${encodeURIComponent(cdnUrl)}`;
   }
   return cdnUrl;
 };
