@@ -2,14 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "client-web/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    },
-    {
-      "src": "admin-web/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
@@ -18,12 +11,12 @@
   ],
   "routes": [
     {
-      "src": "/admin/(.*)",
-      "dest": "/admin-web/index.html"
+      "src": "/admin(?:/(.*)|$)",
+      "dest": "/admin/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/client-web/index.html"
+      "dest": "/client/index.html"
     }
   ]
 }

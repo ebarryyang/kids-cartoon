@@ -2,6 +2,11 @@
   "name": "kids-cartoon",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "npm run build:client && npm run build:admin && node scripts/merge-dist.js",
+    "build:client": "cd client-web && npm run build",
+    "build:admin": "cd admin-web && npm run build"
+  },
   "dependencies": {
     "express": "^5.2.1",
     "cors": "^2.8.6",

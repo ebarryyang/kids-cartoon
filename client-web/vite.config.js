@@ -51,6 +51,7 @@ const resolveRedirectPlugin = () => {
 }
 
 export default defineConfig({
+  base: '/client/',
   server: {
     port: 5173,
     proxy: {
