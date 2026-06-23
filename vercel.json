@@ -11,8 +11,16 @@
   ],
   "routes": [
     {
-      "src": "/admin(?:/(.*)|$)",
+      "src": "/admin",
       "dest": "/admin/index.html"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/admin/index.html"
+    },
+    {
+      "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|vtt|map|woff2?|ttf)$",
+      "continue": true
     },
     {
       "src": "/(.*)",
