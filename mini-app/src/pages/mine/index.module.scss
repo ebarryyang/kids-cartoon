@@ -484,3 +484,215 @@
     transform: scale(0.98);
   }
 }
+
+.fileItemRight {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-left: $spacing-md;
+  flex-shrink: 0;
+}
+
+.drillBtn {
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: #FFF4D6;
+  color: #FF7D00;
+  font-weight: 900;
+  font-size: 22rpx;
+
+  &:active { background: #FFE799; }
+}
+
+.pathRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: #F8F9FA;
+  border-radius: 20rpx;
+}
+
+.pathLabel {
+  font-size: 22rpx;
+  font-weight: 900;
+  color: #666;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 24rpx;
+  color: #333;
+}
+
+.crumbItem {
+  max-width: 280rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4rpx 10rpx;
+  border-radius: 14rpx;
+  color: #1A73E8;
+
+  &:active { background: rgba(26,115,232,0.08); }
+}
+
+.crumbWithSep { display: flex; align-items: center; }
+.crumbSep { color: #AAA; margin: 0 2rpx; }
+
+.backBtn {
+  align-self: flex-start;
+  padding: 8rpx 18rpx;
+  background: #FFFFFF;
+  border-radius: 22rpx;
+  font-size: 22rpx;
+  font-weight: 900;
+  color: #555;
+  border: 2rpx solid #EEE;
+
+  &:active { background: #F2F2F2; }
+}
+
+.statusRow, .errorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: $spacing-md;
+  border-radius: 20rpx;
+  margin-bottom: $spacing-md;
+}
+
+.statusRow { background: #F0F9FF; }
+.statusText { flex: 1; color: #0B5F9E; font-size: 24rpx; font-weight: 900; }
+
+.errorRow { background: #FFF1F0; }
+.errorText { flex: 1; color: #B42318; font-size: 24rpx; font-weight: 900; }
+
+.retryBtn {
+  padding: 10rpx 20rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  font-weight: 900;
+  font-size: 22rpx;
+  color: #333;
+  border: 2rpx solid #EEE;
+
+  &:active { background: #F2F2F2; }
+}
+
+.disabledBtn {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tokenMiniRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  margin-top: $spacing-md;
+  border: 4rpx solid rgba(255,209,59,0.4);
+
+  &:active { background: #FFFBEB; }
+}
+
+.tokenMiniText { font-size: 24rpx; font-weight: 900; color: #FF7D00; }
+
+.tokenPasteCard {
+  margin-top: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  border: 4rpx dashed #FFD13B;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.tokenPasteLabel { font-size: 24rpx; color: #555; font-weight: 900; }
+
+.tokenPasteInput {
+  width: 100%;
+  padding: 18rpx 22rpx;
+  background: #F8F9FA;
+  border-radius: 22rpx;
+  font-size: 24rpx;
+  color: #222;
+  box-sizing: border-box;
+}
+
+.tokenPasteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.tokenBtnGhost, .tokenBtnPrimary {
+  padding: 14rpx 30rpx;
+  border-radius: 28rpx;
+  font-weight: 900;
+  font-size: 26rpx;
+}
+
+.tokenBtnGhost {
+  background: #F2F2F2;
+  color: #555;
+
+  &:active { background: #E5E5E5; }
+}
+
+.tokenBtnPrimary {
+  background: linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%);
+  color: #FFFFFF;
+  box-shadow: 0 8rpx 16rpx rgba(255,125,0,0.25);
+
+  &:active { transform: scale(0.98); }
+}
+
+.tokenHint {
+  font-size: 22rpx;
+  color: #666;
+  margin-bottom: $spacing-sm;
+  line-height: 1.6;
+}
+
+.importedSection {
+  margin-top: $spacing-lg;
+  padding: $spacing-md;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.sectionTitle2 {
+  font-size: 26rpx;
+  font-weight: 900;
+  color: #222;
+  margin-bottom: 4rpx;
+}
+
+.importedItem {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 18rpx;
+  background: #F5FFF7;
+  border-radius: 22rpx;
+  border: 2rpx solid #E6F7EB;
+}
+
+.importedIcon { font-size: 32rpx; }
+
+.importedInfo { flex: 1; display: flex; flex-direction: column; }
+.importedName { font-size: 26rpx; font-weight: 900; color: #1F2937; }
+.importedMeta { font-size: 22rpx; color: #6B7280; margin-top: 4rpx; }

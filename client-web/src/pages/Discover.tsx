@@ -19,7 +19,7 @@ const updates = [
 
 export default function Discover() {
   const navigate = useNavigate();
-  const { addedToPark, addToPark, isAddedToPark, isSeriesUnlocked } = useStore();
+  const { addedToPark, addToPark, isAddedToPark, isSeriesUnlocked, unlockSeries } = useStore();
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const handleAddToPark = (seriesId: string) => {
@@ -37,10 +37,10 @@ export default function Discover() {
       return;
     }
     if (!isSeriesUnlocked(seriesId)) {
+      unlockSeries(seriesId);
       navigate('/');
       return;
     }
-    // 已解锁，进入播放
     navigate('/player', { state: { seriesId } });
   };
 

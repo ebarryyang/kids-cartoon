@@ -6,6 +6,7 @@ export interface EpisodeFile {
   size?: number;
   progress?: number; // 播放进度 0-100
   playCount?: number;
+  lastPlayedAt?: number; // 上次播放时间戳（ms）
 }
 
 // 课程系列与网盘文件的映射关系

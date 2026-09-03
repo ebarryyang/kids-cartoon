@@ -48,14 +48,28 @@ export default function Auth() {
         setAccessToken(data.access_token);
         setStep('success');
         setTimeout(() => {
-          navigate('/');
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect');
+          try {
+            if (redirect && /^\/[A-Za-z0-9\-\/_.~%?=&:@]*$/.test(redirect)) {
+              navigate(redirect, { replace: true });
+              return;
+            }
+          } catch (_) {}
+          navigate('/', { replace: true });
         }, 1500);
       } else {
-        setError('获取 Token 失败，请检查授权码是否正确或已过期');
+        const desc = (data && typeof data === 'object' && data.error_description) ? String(data.error_description) : '';
+        const code = (data && typeof data === 'object' && data.error) ? String(data.error) : '';
+        if (desc || code) {
+          setError(`授权失败${code ? ` [${code}]` : ''}${desc ? `：${desc}` : ''}（请检查授权码是否正确或已过期，建议重新获取）`);
+        } else {
+          setError('获取 Token 失败，请检查授权码是否正确或已过期');
+        }
         setStep('input');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error_description || err.message || '网络请求失败');
+      setError((err && err.response && err.response.data && err.response.data.error_description) || (err && err.message) || '网络请求失败');
       setStep('input');
     } finally {
       setLoading(false);

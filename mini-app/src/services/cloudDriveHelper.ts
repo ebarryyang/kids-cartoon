@@ -1,144 +1,207 @@
+
 import Taro from '@tarojs/taro';
 
-export interface VideoFile {
-  id: string;
-  name: string;
-  streamingUrl: string;
-  coverUrl?: string;
-  progress?: number;
-  playCount?: number;
+const PROXY_BASE = process.env.TARO_APP_PROXY_BASE || 'https://kids-cartoon-two.vercel.app';
+const DEFAULT_FOLDER = '/我的应用数据/英语宝贝动画宝';
+const STORAGE_KEY = 'kids-cartoon/baidu-access-token';
+
+const VIDEO_EXT_RE = /\.(mp4|mkv|avi|mov|m4v|flv|wmv|ts|webm)$/i;
+
+export interface PanFile {
+  fs_id: string | number;
+  server_filename: string;
+  isdir: number | string | boolean;
+  size?: number | string;
+  path?: string;
+  dlink?: string;
 }
 
-export class CloudDriveHelper {
-  private static readonly BAIDU_OAUTH_SERVER = 'http://localhost:3001/api/baidu';
-  
-  // 模拟从本地存储读取 AccessToken
-  private static getAccessToken(): string | null {
-    return Taro.getStorageSync('baidu_access_token') || null;
-  }
+export interface PanListResult {
+  errno: number;
+  errmsg?: string;
+  list?: PanFile[];
+  guid?: any;
+  [k: string]: any;
+}
 
-  /**
-   * 绑定百度网盘
-   * 实际业务中：由于微信小程序无法直接打开外部 OAuth 页面，通常的做法是：
-   * 1. 引导用户复制一段链接去浏览器打开进行授权。
-   * 2. 或者在后端对接百度的 Device Flow（设备授权码机制），在小程序内显示一个二维码或验证码，用户用百度网盘App扫码授权。
-   * 这里我们演示拿到真实 AccessToken 后的处理逻辑。
-   */
-  public static async bindDrive(): Promise<boolean> {
-    try {
-      // 演示：假设我们已经通过某种方式（如 Device Flow）从我们自己的服务器拿到了 AccessToken
-      // 此处为了让您的小程序能继续无缝演示，我们仍保留一个成功的 Promise 返回
-      // 真实代码：
-      // const res = await Taro.request({ url: `${this.BAIDU_OAUTH_SERVER}/auth-url` })
-      // ...
-      
-      // 模拟成功获取到 Token 并存入本地
-      Taro.setStorageSync('baidu_access_token', 'mock_real_baidu_token_12345');
-      return true;
-    } catch (error) {
-      console.error('绑定网盘失败', error);
-      return false;
-    }
-  }
+export interface FolderVideo {
+  fsId: string;
+  fileId: string;
+  fileName: string;
+  size: number;
+  dlink?: string;
+}
 
-  /**
-   * 检查是否已绑定网盘
-   */
-  public static isDriveBound(): boolean {
-    return !!this.getAccessToken();
-  }
+function normIsDir(v: any): boolean {
+  if (v === true || v === false) return v;
+  return Number(v) === 1;
+}
 
-  /**
-   * 模拟：获取指定文件夹下的动画片文件列表
-   * 真实场景下，需使用网盘的 AccessToken 调用其 Open API 获取文件列表。
-   */
-  public static async getFolderVideos(folderId: string): Promise<VideoFile[]> {
-    // 真实 API 逻辑示例：
-    /*
-    const token = this.getAccessToken();
-    if (token) {
-      const res = await Taro.request({
-        url: 'https://pan.baidu.com/rest/2.0/xpan/file?method=list&dir=/apps/kids_animation',
-        data: { access_token: token }
-      });
-      // 解析 res.data.list 组装为 VideoFile 数组
-    }
-    */
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            id: 'video_1',
-            name: '第 1 集：Muddy Puddles',
-            streamingUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            coverUrl: 'https://images.unsplash.com/photo-1544568100-847a948585b9?w=300&q=80',
-            playCount: 2,
-            progress: 100
-          },
-          {
-            id: 'video_2',
-            name: '第 2 集：Mr Dinosaur is Lost',
-            streamingUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            coverUrl: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=300&q=80',
-            playCount: 1,
-            progress: 45
-          },
-          {
-            id: 'video_3',
-            name: '第 3 集：Best Friend',
-            streamingUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            coverUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&q=80',
-            playCount: 0,
-            progress: 0
-          },
-          {
-            id: 'video_4',
-            name: '第 4 集：Polly Parrot',
-            streamingUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            coverUrl: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=300&q=80',
-            playCount: 0,
-            progress: 0
-          },
-          {
-            id: 'video_5',
-            name: '第 5 集：Hide and Seek',
-            streamingUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            coverUrl: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=300&q=80',
-            playCount: 0,
-            progress: 0
-          }
-        ]);
-      }, 800);
+function getAccessToken(): string {
+  try {
+    const v = Taro.getStorageSync(STORAGE_KEY);
+    return typeof v === 'string' ? v : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+export const CloudDriveHelper = {
+  isDriveBound(): boolean {
+    return !!getAccessToken();
+  },
+
+  setAccessToken(token: string) {
+    try { Taro.setStorageSync(STORAGE_KEY, token || ''); } catch (e) {}
+  },
+
+  clearAccessToken() {
+    try { Taro.removeStorageSync(STORAGE_KEY); } catch (e) {}
+  },
+
+  async bindDrive(): Promise<boolean> {
+    const token = getAccessToken();
+    if (token) return true;
+    Taro.showModal({
+      title: '尚未绑定百度网盘',
+      content: '请在 Web 端（https://kids-cartoon-two.vercel.app/auth）完成百度授权后，把生成的 access_token 复制到小程序「我的 → 粘贴 access_token」输入框中，或用 Storage.set 设置。',
+      showCancel: false,
+      confirmText: '知道了',
     });
-  }
+    return false;
+  },
 
-  /**
-   * 真实获取指定文件的视频直链 (Streaming URL)
-   * 结合刚才写好的 Node.js SaaS 后端中间件
-   */
-  public static async getStreamingUrl(fsid: string): Promise<string> {
-    const token = this.getAccessToken();
-    if (!token) return 'https://www.w3schools.com/html/mov_bbb.mp4';
+  getDefaultDir(): string {
+    return DEFAULT_FOLDER;
+  },
 
-    try {
-      // 向我们自己的 Node.js 后端发起请求，用 fsid 换取 dlink直链
-      const response = await Taro.request({
-        url: `${this.BAIDU_OAUTH_SERVER}/video-stream`,
-        method: 'GET',
-        data: {
-          access_token: token,
-          fsid: fsid
-        }
-      });
+  getProxyBase(): string {
+    return PROXY_BASE;
+  },
 
-      if (response.data && response.data.success) {
-        return response.data.url; // 这个 URL 就可以直接放进 <Video src={url}> 播放了
-      }
-      return 'https://www.w3schools.com/html/mov_bbb.mp4';
-    } catch (err) {
-      console.error('获取真实流媒体直链失败', err);
-      return 'https://www.w3schools.com/html/mov_bbb.mp4';
+  async getFileList(dir: string = DEFAULT_FOLDER): Promise<PanListResult> {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      return { errno: -99, errmsg: '未绑定百度网盘，请先到 Web 端授权获取 access_token', list: [] };
     }
-  }
-}
+    const params = new URLSearchParams();
+    params.set('path', 'xpan/file');
+    params.set('method', 'list');
+    params.set('dir', dir);
+    params.set('access_token', accessToken);
+    params.set('order', 'name');
+    params.set('limit', '200');
+    params.set('showempty', '1');
+    params.set('web', 'web');
+    const url = `${PROXY_BASE}/api/baidu-pan-proxy?${params.toString()}`;
+    try {
+      const resp = await Taro.request<any>({
+        url,
+        method: 'GET',
+        timeout: 20000,
+        dataType: 'json',
+        header: { Accept: 'application/json' },
+      });
+      const d = (resp && resp.data) ? resp.data : {};
+      if (d && typeof d === 'object' && Array.isArray(d.list)) {
+        d.list = d.list.map((x: any) => ({ ...(x || {}), isdir: normIsDir((x || {}).isdir) }));
+      }
+      return (d as any) as PanListResult;
+    } catch (err: any) {
+      const msg = (err && err.errMsg) ? err.errMsg : (err && err.message) ? err.message : String(err);
+      return { errno: -98, errmsg: msg, list: [] };
+    }
+  },
+
+  async getFileMetas(fsIds: Array<string | number>): Promise<PanListResult> {
+    const accessToken = getAccessToken();
+    if (!accessToken) return { errno: -99, errmsg: '未绑定百度网盘', list: [] };
+    if (!fsIds || fsIds.length === 0) return { errno: 0, list: [] };
+    const fsids = `[${fsIds.map((x) => String(x)).join(',')}]`;
+    const params = new URLSearchParams();
+    params.set('path', 'xpan/multimedia');
+    params.set('method', 'filemetas');
+    params.set('fsids', fsids);
+    params.set('dlink', '1');
+    params.set('access_token', accessToken);
+    const url = `${PROXY_BASE}/api/baidu-pan-proxy?${params.toString()}`;
+    try {
+      const resp = await Taro.request<any>({
+        url, method: 'GET', timeout: 20000, dataType: 'json',
+        header: { Accept: 'application/json' },
+      });
+      return (resp && resp.data) ? (resp.data as any) : { errno: -98, list: [] };
+    } catch (err: any) {
+      const msg = (err && err.errMsg) ? err.errMsg : String(err);
+      return { errno: -98, errmsg: msg, list: [] };
+    }
+  },
+
+  async resolveRedirect(rawUrl: string): Promise<string> {
+    if (!rawUrl) return rawUrl;
+    try {
+      const params = new URLSearchParams();
+      params.set('url', rawUrl);
+      const url = `${PROXY_BASE}/api/resolve-redirect?${params.toString()}`;
+      const resp = await Taro.request<any>({
+        url, method: 'GET', timeout: 15000, dataType: 'json',
+        header: { Accept: 'application/json' },
+      });
+      const d = (resp && resp.data) ? resp.data : {};
+      if (d && typeof d === 'object' && d.location) return String(d.location);
+      return rawUrl;
+    } catch (e) {
+      return rawUrl;
+    }
+  },
+
+  async getFolderVideos(folderPathOrFsId: string): Promise<FolderVideo[]> {
+    if (!folderPathOrFsId) return [];
+    const looksLikePath = folderPathOrFsId.startsWith('/');
+    let list: PanFile[] = [];
+    if (looksLikePath) {
+      const r = await this.getFileList(folderPathOrFsId);
+      if (r.errno !== 0 || !r.list) return [];
+      list = r.list;
+    } else {
+      return [];
+    }
+    const videos = list.filter((f) => !normIsDir(f.isdir) && VIDEO_EXT_RE.test(f.server_filename || ''));
+    const fsIds = videos.map((v) => String(v.fs_id)).filter(Boolean);
+    if (fsIds.length === 0) return [];
+    const meta = await this.getFileMetas(fsIds);
+    const byId = new Map<string, any>();
+    if (meta && Array.isArray(meta.list)) {
+      meta.list.forEach((m: any) => { if (m) byId.set(String(m.fs_id), m); });
+    }
+    const out: FolderVideo[] = [];
+    for (const v of videos) {
+      const id = String(v.fs_id);
+      const m = byId.get(id) || {};
+      out.push({
+        fsId: id,
+        fileId: id,
+        fileName: v.server_filename || m.server_filename || `video_${id}`,
+        size: Number(v.size || m.size || 0),
+        dlink: m.dlink || undefined,
+      });
+    }
+    return out;
+  },
+
+  async getStreamingUrl(fileIdOrFsId: string): Promise<string> {
+    if (!fileIdOrFsId) return '';
+    const accessToken = getAccessToken();
+    if (!accessToken) return '';
+    const meta = await this.getFileMetas([fileIdOrFsId]);
+    const m = (meta && Array.isArray(meta.list) && meta.list[0]) || ({} as any);
+    const dlink: string = (m && m.dlink) ? String(m.dlink) : '';
+    if (!dlink) return '';
+    const withToken = dlink.includes('?') ? `${dlink}&access_token=${accessToken}` : `${dlink}?access_token=${accessToken}`;
+    const finalUrl = await this.resolveRedirect(withToken);
+    if (!finalUrl) return '';
+    const q = new URLSearchParams();
+    q.set('url', finalUrl);
+    return `${PROXY_BASE}/api/proxy-video?${q.toString()}`;
+  },
+};

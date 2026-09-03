@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "meta": {
+    "format": "kids-cartoon.vocabulary.v1",
+    "description": "生词气泡时间轴事件（H5 TimelineEvent & 小程序 CourseEvent 通用）"
+  },
+  "events": [
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_001",
+      "time": 9.0,
+      "wordEn": "Hand",
+      "wordZh": "手",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_00_Penelope.mp3",
+      "coordX": 26,
+      "coordY": 67,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_002",
+      "time": 9.0,
+      "wordEn": "Mummy",
+      "wordZh": "妈妈",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_01_Let_s.mp3",
+      "coordX": 27,
+      "coordY": 21,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_003",
+      "time": 9.0,
+      "wordEn": "Dad",
+      "wordZh": "爸爸",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_02_Hands.mp3",
+      "coordX": 63,
+      "coordY": 21,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_004",
+      "time": 27.5,
+      "wordEn": "Teddy",
+      "wordZh": "泰迪熊",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_03_Mom.mp3",
+      "coordX": 42,
+      "coordY": 35,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_005",
+      "time": 27.5,
+      "wordEn": "Bear",
+      "wordZh": "熊",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_04_Dad.mp3",
+      "coordX": 72,
+      "coordY": 26,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_006",
+      "time": 37.5,
+      "wordEn": "Garden",
+      "wordZh": "花园、院子",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_05_Max.mp3",
+      "coordX": 68,
+      "coordY": 67,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_007",
+      "time": 44.5,
+      "wordEn": "Picnic",
+      "wordZh": "野餐",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_06_Won_t.mp3",
+      "coordX": 59,
+      "coordY": 25,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_008",
+      "time": 74.0,
+      "wordEn": "Cake",
+      "wordZh": "蛋糕",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_07_Idea.mp3",
+      "coordX": 39,
+      "coordY": 28,
+      "pos": "noun"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_009",
+      "time": 108.0,
+      "wordEn": "Hold",
+      "wordZh": "握住、抱住",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_08_It_s.mp3",
+      "coordX": 65,
+      "coordY": 27,
+      "pos": "verb"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_010",
+      "time": 136.5,
+      "wordEn": "Wave",
+      "wordZh": "挥手",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_09_Whoa.mp3",
+      "coordX": 30,
+      "coordY": 33,
+      "pos": "verb"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_011",
+      "time": 156.5,
+      "wordEn": "Stop",
+      "wordZh": "停下",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_10_Fun.mp3",
+      "coordX": 39,
+      "coordY": 52,
+      "pos": "verb"
+    },
+    {
+      "id": "evt_Lets_Hold_Hands_Penelope_012",
+      "time": 213.5,
+      "wordEn": "Play",
+      "wordZh": "玩、玩耍",
+      "imageUrl": "",
+      "audioUrl": "/media/Lets_Hold_Hands_Penelope_audio/word_11_Pee.mp3",
+      "coordX": 62,
+      "coordY": 47,
+      "pos": "verb"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import DriveManager from "@/pages/DriveManager";
 import HonorManager from "@/pages/HonorManager";
 import CourseMaterialManager from "@/pages/CourseMaterialManager";
 import ExerciseManager from "@/pages/ExerciseManager";
+import CourseBuilder from "@/pages/CourseBuilder";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
 // Simple auth guard
@@ -20,12 +21,13 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/admin">
       <Routes>
         <Route path="/login" element={<Login />} />
         
         <Route path="/" element={<RequireAuth><DashboardLayout /></RequireAuth>}>
           <Route index element={<Home />} />
+          <Route path="course-builder" element={<CourseBuilder />} />
           <Route path="content" element={<ContentManager />} />
           <Route path="content/edit/:id" element={<TimelineEditor />} />
           <Route path="activation-codes" element={<ActivationCodeManager />} />

@@ -1,30 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/admin",
-      "dest": "/admin/index.html"
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "/admin/index.html"
-    },
-    {
-      "src": "/(.*)\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|vtt|map|woff2?|ttf)$",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/client/index.html"
-    }
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "installCommand": "npm install --no-audit --no-fund",
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/api/course-materials(.*)", "destination": "/api/course-materials" },
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/((?!.*\\.).*)", "destination": "/admin/index.html" },
+    { "source": "/((?!api)(?!.*\\.).*)", "destination": "/client/index.html" }
   ]
 }

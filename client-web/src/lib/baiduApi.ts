@@ -1,46 +1,48 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
-export const APP_KEY = 'QzZpo7lkiRQjYoYtACRyYCWjrcNyLqmP'; 
-export const SECRET_KEY = 'Ig5e7CeRvJDKhfsuZoueUyqkxUYPWnH8'; // 仅用于本地 MVP 演示
+export const APP_KEY = 'QzZpo7lkiRQjYoYtACRyYCWjrcNyLqmP';
 
-// OOB 授权换取 Token
+function unwrapResponse<T>(promise: Promise<any>): Promise<T> {
+  return promise
+    .then((r) => r.data as T)
+    .catch((err: AxiosError) => {
+      if (err && (err as any).response && (err as any).response.data !== undefined) {
+        return (err as any).response.data as T;
+      }
+      throw err;
+    });
+}
+
 export const getTokenWithCode = async (code: string) => {
-  const url = `/api/baidu-token?grant_type=authorization_code&code=${code}&client_id=${APP_KEY}&client_secret=${SECRET_KEY}&redirect_uri=oob`;
-  const response = await axios.get(url);
-  return response.data;
+  return unwrapResponse<any>(
+    axios.get(`/api/baidu-token?code=${encodeURIComponent(code)}`)
+  );
 };
 
-// 获取文件列表
 export const getFileList = async (accessToken: string, dir: string = '/我的应用数据/英语宝贝动画宝') => {
-  const url = `/baidu-api/rest/2.0/xpan/file?method=list&dir=${encodeURIComponent(dir)}&access_token=${accessToken}`;
-  const response = await axios.get(url);
-  return response.data;
+  return unwrapResponse<any>(
+    axios.get(`/api/baidu-pan-proxy?path=xpan/file&method=list&dir=${encodeURIComponent(dir)}&access_token=${encodeURIComponent(accessToken)}`)
+  );
 };
 
-// 获取文件 dlink
 export const getFileMetas = async (accessToken: string, fsids: number[]) => {
-  const url = `/baidu-api/rest/2.0/xpan/multimedia?method=filemetas&fsids=[${fsids.join(',')}]&dlink=1&access_token=${accessToken}`;
-  const response = await axios.get(url);
-  return response.data;
+  return unwrapResponse<any>(
+    axios.get(`/api/baidu-pan-proxy?path=xpan/multimedia&method=filemetas&fsids=[${fsids.join(',')}]&dlink=1&access_token=${encodeURIComponent(accessToken)}`)
+  );
 };
 
-// 解析 302 重定向获取真实 CDN 链接
 export const resolveRedirect = async (dlink: string, accessToken: string) => {
   try {
-    const fullUrl = `${dlink}&access_token=${accessToken}`;
-    // 使用本地 Python 代理服务器解析 302 重定向
-    const proxyUrl = `http://127.0.0.1:8080/get_video_url?url=${encodeURIComponent(fullUrl)}`;
-    const response = await axios.get(proxyUrl);
-    
-    if (response.data && response.data.location) {
-      let location = response.data.location;
-      // 保证重定向也是安全的 https
-      if (location.startsWith('http://')) {
-         location = location.replace('http://', 'https://');
-      }
+    const fullUrl = `${dlink}&access_token=${encodeURIComponent(accessToken)}`;
+    const proxyUrl = `/api/resolve-redirect?url=${encodeURIComponent(fullUrl)}`;
+    const r: any = await unwrapResponse(axios.get(proxyUrl));
+
+    if (r && r.location) {
+      let location = String(r.location);
+      if (location.startsWith('http://')) location = location.replace('http://', 'https://');
       return location;
     }
-    
+
     return fullUrl;
   } catch (error) {
     console.error('Error resolving redirect:', error);
@@ -48,11 +50,9 @@ export const resolveRedirect = async (dlink: string, accessToken: string) => {
   }
 };
 
-// 将真实 CDN 链接转换为本地代理链接
 export const getProxiedVideoUrl = (cdnUrl: string) => {
   if (!cdnUrl) return '';
   if (cdnUrl.includes('baidupcs.com')) {
-    // 终极杀手锏：直接把请求转发给本地 Python 代理服务器处理
     return `/api/proxy-video?url=${encodeURIComponent(cdnUrl)}`;
   }
   return cdnUrl;

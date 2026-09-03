@@ -22,7 +22,15 @@ export default function Login() {
   // 如果已登录，跳转到首页
   useEffect(() => {
     if (isLoggedIn()) {
-      navigate('/');
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect');
+      try {
+        if (redirect && /^\/[A-Za-z0-9\-\/_.~%?=&:@#]*$/.test(redirect)) {
+          navigate(redirect, { replace: true });
+          return;
+        }
+      } catch (_) {}
+      navigate('/', { replace: true });
     }
   }, [isLoggedIn, navigate]);
 

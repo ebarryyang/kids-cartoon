@@ -12,11 +12,13 @@ import {
   Cloud,
   Trophy,
   BookOpen,
-  HelpCircle
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 
 const navigation = [
   { name: '控制台', href: '/', icon: LayoutDashboard },
+  { name: '课件制作', href: '/course-builder', icon: Sparkles },
   { name: '内容管理', href: '/content', icon: Video },
   { name: '授权码管理', href: '/activation-codes', icon: KeyRound },
   { name: '网盘资源', href: '/drive', icon: Cloud },

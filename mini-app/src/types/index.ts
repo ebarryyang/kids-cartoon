@@ -2,9 +2,12 @@ export interface CourseEvent {
   id: string;
   time: number;
   word: string;
-  image: string;
-  audio: string;
-  sound: string;
+  wordZh?: string;
+  image?: string;
+  audio?: string;
+  sound?: string;
+  coordX?: number;
+  coordY?: number;
 }
 
 export interface VideoFile {

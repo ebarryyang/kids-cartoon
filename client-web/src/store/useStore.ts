@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { SeriesMapping } from './types';
+import type { SeriesMapping, EpisodeFile } from './types';
 
 interface User {
   id: string;
@@ -31,6 +31,8 @@ interface AppState {
   getSeriesMapping: (seriesId: string) => SeriesMapping | undefined;
   // 更新单集进度
   updateEpisodeProgress: (seriesId: string, fsId: number, progress: number) => void;
+  // 获取某个系列最近播放的一集（按 lastPlayedAt 降序）
+  getRecentlyPlayedEpisode: (seriesId: string) => EpisodeFile | undefined;
   // 从发现页添加到乐园
   addToPark: (seriesId: string, folderPath: string) => void;
   // 已加入乐园的系列ID集合
@@ -82,12 +84,27 @@ export const useStore = create<AppState>()(
         const current = get().seriesMappings;
         const updated = current.map(m => {
           if (m.seriesId !== seriesId) return m;
-          const episodes = m.episodes.map(ep => 
-            ep.fsId === fsId ? { ...ep, progress } : ep
+          const now = Date.now();
+          const episodes = m.episodes.map(ep =>
+            ep.fsId === fsId
+              ? {
+                  ...ep,
+                  progress,
+                  lastPlayedAt: now,
+                  playCount: (ep.playCount ?? 0) + 1,
+                }
+              : ep
           );
           return { ...m, episodes };
         });
         set({ seriesMappings: updated });
+      },
+      getRecentlyPlayedEpisode: (seriesId: string) => {
+        const mapping = get().seriesMappings.find(m => m.seriesId === seriesId);
+        if (!mapping || mapping.episodes.length === 0) return undefined;
+        return mapping.episodes
+          .filter(ep => ep.lastPlayedAt != null)
+          .sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0];
       },
       addedToPark: [],
       addToPark: (seriesId: string, folderPath: string) => {

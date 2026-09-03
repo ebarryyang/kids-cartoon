@@ -3,13 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run build:client && npm run build:admin && node scripts/merge-dist.js",
+    "build": "npm run install:all && npm run build:client && npm run build:admin && node scripts/merge-dist.js",
+    "install:all": "cd client-web && npm install --no-audit --no-fund --loglevel=error && cd ../admin-web && npm install --no-audit --no-fund --loglevel=error",
     "build:client": "cd client-web && npm run build",
     "build:admin": "cd admin-web && npm run build"
   },
   "dependencies": {
-    "express": "^5.2.1",
+    "axios": "^1.17.0",
     "cors": "^2.8.6",
-    "axios": "^1.17.0"
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "vercel": "^59.5.0"
   }
 }

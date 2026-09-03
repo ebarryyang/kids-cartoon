@@ -41,6 +41,22 @@
   color: $color-text-primary;
 }
 
+.headerCenter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $spacing-sm;
+}
+
+.seriesSub {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #FF7D00;
+  opacity: 0.9;
+}
+
 .scoreBadge {
   display: flex;
   align-items: center;

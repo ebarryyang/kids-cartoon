@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Play, Save, Trash2, Crosshair, Volume2, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, Play, Save, Trash2, Crosshair, Volume2, Upload, Download, FileJson } from 'lucide-react';
+import { loadAllCourses, type CourseMaterial } from '@/lib/coursesDataLayer';
+import { filterNounVerbOnly } from '@/lib/vocabFilter';
 
 export interface TimelineEvent {
   id: string;
@@ -13,12 +15,170 @@ export interface TimelineEvent {
   coordY: number;
 }
 
+const DEFAULT_VIDEO_URL = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4";
+const PENDING_VOCAB_KEY = 'admin-builder:pending-vocab-v1';
+
+function stemFromAny(v: string): string {
+  if (!v) return '';
+  const name = v.split(/[\\/]/).filter(Boolean).pop() || '';
+  const noExt = name.replace(/\.[^.]+$/, '');
+  return noExt
+    .replace(/_en$/i, '')
+    .replace(/_zh$/i, '')
+    .replace(/_vocabulary$/i, '')
+    .replace(/_audio$/i, '');
+}
+
+const PENDING_IMPORTED_ALREADY = 'admin-timeline:pending-imported';
+
 export default function TimelineEditor() {
-  const { id } = useParams();
+  const { id = 'untitled' } = useParams();
   const navigate = useNavigate();
-  
+  const TL_STORAGE_KEY = `admin-timeline:${id}`;
+  const [allCourses, setAllCourses] = useState<CourseMaterial[]>([]);
+  useEffect(() => {
+    (async () => {
+      try { setAllCourses(await loadAllCourses()); } catch (e) { /* ignore */ }
+    })();
+  }, []);
+
+  const loadTimelineInit = () => {
+    let initEvents: TimelineEvent[] = [];
+    let initVideo = DEFAULT_VIDEO_URL;
+    let initEn = '';
+    let initZh = '';
+    let pendingToImportEvents: TimelineEvent[] | null = null;
+    let pendingSource: string | null = null;
+    let pendingCount = 0;
+
+    // 优先级 1：读自己的 TL_KEY（CourseBuilder 现在跳转前已写好）
+    try {
+      const raw = localStorage.getItem(TL_STORAGE_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        initEvents = Array.isArray(obj.events) ? obj.events : [];
+        initVideo = typeof obj.videoUrl === 'string' && obj.videoUrl ? obj.videoUrl : DEFAULT_VIDEO_URL;
+        initEn = typeof obj.subtitlesEnUrl === 'string' ? obj.subtitlesEnUrl : '';
+        initZh = typeof obj.subtitlesZhUrl === 'string' ? obj.subtitlesZhUrl : '';
+      }
+    } catch { /* ignore */ }
+
+    // 优先级 2：如果 TL_KEY 里没有 URL，就按 PENDING_VOCAB_KEY.stem 推 /media/{stem}.*，并把 pending events 合并进 initEvents
+    const needDefault = initVideo === DEFAULT_VIDEO_URL || initVideo.trim() === '';
+    if (needDefault) {
+      try {
+        const pendingRaw = localStorage.getItem(PENDING_VOCAB_KEY);
+        if (pendingRaw) {
+          const parsed = JSON.parse(pendingRaw);
+          // 如果已经处理过 pending（页面刷新），避免反复重复导入
+          const imported = JSON.parse(localStorage.getItem(PENDING_IMPORTED_ALREADY) || '[]');
+          const pendingCid = `${parsed.createdAt || ''}__${parsed.source || ''}`;
+          if (!imported.includes(pendingCid)) {
+            const evts = parsed?.events;
+            if (Array.isArray(evts) && evts.length > 0) {
+              pendingToImportEvents = evts
+                .map((e: any) => ({
+                  id: e.id || `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                  time: Number(Number(e.time).toFixed(1)) || 0,
+                  wordEn: e.wordEn || '',
+                  wordZh: e.wordZh || '',
+                  imageUrl: e.imageUrl || '',
+                  audioUrl: e.audioUrl || '',
+                  coordX: typeof e.coordX === 'number' ? e.coordX : 50,
+                  coordY: typeof e.coordY === 'number' ? e.coordY : 25,
+                }))
+                .filter((e: TimelineEvent) => !!e.wordEn);
+              pendingCount = pendingToImportEvents.length;
+              pendingSource = parsed.source || '课件制作向导';
+            }
+          }
+          // 根据 pending.predict 或 stem，推出默认 4 个 URL（和流水线文件名约定对齐）
+          if (parsed?.predict && typeof parsed.predict === 'object') {
+            const p = parsed.predict;
+            if (needDefault && (initVideo === DEFAULT_VIDEO_URL || initVideo === '')) initVideo = p.videoUrl || DEFAULT_VIDEO_URL;
+            if (!initEn) initEn = p.subtitlesEnUrl || '';
+            if (!initZh) initZh = p.subtitlesZhUrl || '';
+          } else if (parsed?.stem && typeof parsed.stem === 'string') {
+            const stem = parsed.stem;
+            if (needDefault) initVideo = `/media/${stem}.mp4`;
+            if (!initEn) initEn = `/media/${stem}_en.vtt`;
+            if (!initZh) initZh = `/media/${stem}_zh.vtt`;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 优先级 3：TL_KEY + PENDING 都没有 URL → 在 coursesDataLayer 里按 id 找 episode（如果它是 episodeId）
+    // 或者按 seriesId/episodeId metadata 猜 stem → /media/{stem}.*
+    const stillNeedDefault = initVideo === DEFAULT_VIDEO_URL || initVideo.trim() === '';
+    if (stillNeedDefault && allCourses.length > 0) {
+      let matched: any = null;
+      outer: for (const s of allCourses) {
+        for (const ep of s.episodes || []) {
+          if (ep.episodeId === id) { matched = ep; break outer; }
+        }
+      }
+      if (matched) {
+        if (typeof matched.videoUrl === 'string' && matched.videoUrl) initVideo = matched.videoUrl;
+        if (!initEn && typeof matched.subtitleUrl === 'string') initEn = matched.subtitleUrl;
+        if (!initZh && typeof matched.subtitleZhUrl === 'string') initZh = matched.subtitleZhUrl;
+        // 如果 courseData 里 4 URL 都空，就按 seriesName / episodeName 归一化成 stem
+        const stillNeed = initVideo === DEFAULT_VIDEO_URL || !initVideo;
+        if (stillNeed) {
+          const nameCandidates = [matched.episodeName, matched.episodeId].filter(Boolean);
+          if (nameCandidates.length === 0) nameCandidates.push('output');
+          const best = nameCandidates[0] || 'output';
+          const stem = best
+            .toLowerCase()
+            .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+          initVideo = `/media/${stem}.mp4`;
+          if (!initEn) initEn = `/media/${stem}_en.vtt`;
+          if (!initZh) initZh = `/media/${stem}_zh.vtt`;
+        }
+      } else {
+        // 仍兜底：按 ContentManager 里的内容 id 如果 title 有数字线索，仍默认 /media/output.*
+        const stem = stemFromAny(initVideo || '') || (id.startsWith('builder_') ? 'output' : String(id).replace(/[^a-z0-9]/gi, '_'));
+        if (stem && stem !== 'output') {
+          if (!initEn) initEn = `/media/${stem}_en.vtt`;
+          if (!initZh) initZh = `/media/${stem}_zh.vtt`;
+        }
+      }
+    }
+
+    // 合并 pending 事件（防止重复导入）
+    if (pendingToImportEvents && pendingToImportEvents.length > 0) {
+      const seen = new Set<string>(initEvents.map(e => e.id));
+      for (const e of pendingToImportEvents) if (!seen.has(e.id)) initEvents.push(e);
+      initEvents.sort((a, b) => a.time - b.time);
+      // 持久化 pending 导入状态
+      try {
+        const pendingRaw2 = localStorage.getItem(PENDING_VOCAB_KEY);
+        const p2 = JSON.parse(pendingRaw2 || '{}');
+        const cid = `${p2.createdAt || ''}__${p2.source || ''}`;
+        const importedArr = JSON.parse(localStorage.getItem(PENDING_IMPORTED_ALREADY) || '[]');
+        importedArr.push(cid);
+        localStorage.setItem(PENDING_IMPORTED_ALREADY, JSON.stringify(importedArr.slice(-30)));
+      } catch { /* ignore */ }
+    }
+
+    // 💥 统一 POS 过滤：只保留名词 + 动词（和 Python 流水线算法对齐）
+    initEvents = filterNounVerbOnly(initEvents as any[]);
+
+    return { initEvents, initVideo, initEn, initZh, pendingSource, pendingCount };
+  };
+
+  const {
+    initEvents,
+    initVideo,
+    initEn,
+    initZh,
+    pendingSource,
+    pendingCount,
+  } = loadTimelineInit();
+
   // States
-  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [events, setEvents] = useState<TimelineEvent[]>(initEvents);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [activePreview, setActivePreview] = useState<TimelineEvent | null>(null);
@@ -30,9 +190,52 @@ export default function TimelineEditor() {
   const audioTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 视频配置状态
-  const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4");
-  const [subtitlesEnUrl, setSubtitlesEnUrl] = useState("");
-  const [subtitlesZhUrl, setSubtitlesZhUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState(initVideo);
+  const [subtitlesEnUrl, setSubtitlesEnUrl] = useState(initEn);
+  const [subtitlesZhUrl, setSubtitlesZhUrl] = useState(initZh);
+
+  useEffect(() => {
+    if (allCourses.length === 0) return;
+    const stillNeedVideo = !videoUrl || videoUrl === DEFAULT_VIDEO_URL;
+    const stillNeedEn = !subtitlesEnUrl;
+    const stillNeedZh = !subtitlesZhUrl;
+    if (!stillNeedVideo && !stillNeedEn && !stillNeedZh) return;
+
+    let matched: any = null;
+    outer: for (const s of allCourses) {
+      for (const ep of s.episodes || []) {
+        if (ep.episodeId === id) { matched = ep; break outer; }
+      }
+    }
+    if (!matched) return;
+
+    let nextVideo = videoUrl;
+    let nextEn = subtitlesEnUrl;
+    let nextZh = subtitlesZhUrl;
+
+    if (stillNeedVideo && typeof matched.videoUrl === 'string' && matched.videoUrl) nextVideo = matched.videoUrl;
+    if (stillNeedEn && typeof matched.subtitleUrl === 'string') nextEn = matched.subtitleUrl;
+    if (stillNeedZh && typeof matched.subtitleZhUrl === 'string') nextZh = matched.subtitleZhUrl;
+
+    const stillNeed = nextVideo === DEFAULT_VIDEO_URL || !nextVideo;
+    if (stillNeed) {
+      const nameCandidates = [matched.episodeName, matched.episodeId].filter(Boolean);
+      if (nameCandidates.length === 0) nameCandidates.push('output');
+      const stem = (nameCandidates[0] || 'output')
+        .toLowerCase()
+        .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      if (stem) {
+        nextVideo = `/media/${stem}.mp4`;
+        if (!nextEn) nextEn = `/media/${stem}_en.vtt`;
+        if (!nextZh) nextZh = `/media/${stem}_zh.vtt`;
+      }
+    }
+
+    if (nextVideo !== videoUrl) setVideoUrl(nextVideo);
+    if (nextEn !== subtitlesEnUrl) setSubtitlesEnUrl(nextEn);
+    if (nextZh !== subtitlesZhUrl) setSubtitlesZhUrl(nextZh);
+  }, [allCourses, id, videoUrl, subtitlesEnUrl, subtitlesZhUrl]);
 
   // 拦截视频 URL，如果是百度网盘的 CDN 地址，则进行代理转换
   const getProxiedVideoUrl = (url: string) => {
@@ -186,15 +389,70 @@ export default function TimelineEditor() {
   };
 
   const handleSave = () => {
-    // Here you would typically save to your backend API
     const payload = {
       videoUrl,
       subtitlesEnUrl,
       subtitlesZhUrl,
-      events
+      events,
+      savedAt: new Date().toISOString(),
     };
+    try {
+      localStorage.setItem(TL_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('保存 timeline 到 localStorage 失败：', e);
+    }
     console.log('Saved Timeline Data:', JSON.stringify(payload, null, 2));
-    alert('保存成功！时间轴数据与视频配置已更新。');
+    alert(
+      `✅ 已保存（浏览器本地持久化，刷新页面不丢失）\n\n` +
+      `交互点数量：${events.length}\n` +
+      `当前视频 ID：${id}\n\n` +
+      `📢 若要发布到 C 端和小程序，请点击顶栏「导出词汇表 JSON」，然后把生成的 URL 填到 courses.json 对应单集的 vocabularyUrl 字段并重新部署。`
+    );
+  };
+
+  const buildVocabularyPayload = () => ({
+    version: 1,
+    meta: {
+      format: 'kids-cartoon.vocabulary.v1',
+      description: '生词气泡时间轴事件（H5 TimelineEvent & 小程序 CourseEvent 通用）',
+      generatedAt: new Date().toISOString(),
+      videoId: id,
+    },
+    events: events.map(e => ({
+      id: e.id,
+      time: Number(Number(e.time).toFixed(1)),
+      wordEn: e.wordEn,
+      wordZh: e.wordZh,
+      imageUrl: e.imageUrl || '',
+      audioUrl: e.audioUrl || '',
+      coordX: Number(e.coordX) || 50,
+      coordY: Number(e.coordY) || 25,
+    })).sort((a, b) => a.time - b.time),
+  });
+
+  const safeName = (name: string) => String(name || '').replace(/[\\/:*?"<>|\s]+/g, '_');
+
+  const handleExportJson = () => {
+    const payload = buildVocabularyPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const base = safeName(id || `vocabulary_${Date.now()}`);
+    a.download = `${base}_vocabulary.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  };
+
+  const handleCopyJsonToClipboard = async () => {
+    try {
+      const payload = buildVocabularyPayload();
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      alert('词汇表 JSON 已复制到剪贴板！\n可直接粘贴到课程资料管理的 vocabulary JSON URL 上传文本框，或保存为 .json 文件托管到 public/media/。');
+    } catch (err) {
+      alert('复制失败，请改用「导出 JSON」按钮下载文件。');
+    }
   };
 
   // 处理 Markdown 导入
@@ -247,8 +505,14 @@ export default function TimelineEditor() {
       });
 
       if (newEvents.length > 0) {
-        setEvents(prev => [...prev, ...newEvents].sort((a, b) => a.time - b.time));
-        alert(`成功导入 ${newEvents.length} 个生词节点！`);
+        // 💥 导入前先过 POS 名动过滤
+        const filtered = filterNounVerbOnly(newEvents as any[]);
+        setEvents(prev => [...prev, ...filtered].sort((a, b) => a.time - b.time));
+        if (filtered.length !== newEvents.length) {
+          alert(`✅ 导入成功：解析出 ${newEvents.length} 个生词 → 保留 ${filtered.length} 个名词/动词（已自动过滤形容词/副词/介词/助动词等）。`);
+        } else {
+          alert(`成功导入 ${newEvents.length} 个生词节点！`);
+        }
       } else {
         alert('未能从文件中解析出有效的生词数据，请检查 Markdown 格式是否正确。');
       }
@@ -257,6 +521,33 @@ export default function TimelineEditor() {
     // 清空 input value，以便重复导入同一个文件
     if (e.target) e.target.value = '';
   };
+
+  const PENDING_VOCAB_KEY = 'admin-builder:pending-vocab-v1';
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PENDING_VOCAB_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const events = parsed?.events;
+      if (pendingCount <= 0 && (typeof pendingSource === 'string' && pendingSource.length > 0)) {
+        // 重复导入（刷新页面后 pending 已经合并到 initEvents），但仍然给用户提示一次
+        setTimeout(() => {
+          alert(`ℹ️  已检测到「${pendingSource}」的生词事件，但已在初始化时加载完成（如之前已导入请忽略此提示）。`);
+        }, 220);
+      } else if (pendingCount > 0) {
+        setTimeout(() => {
+          alert(
+            `✅ 已从「${pendingSource || '课件制作向导'}」自动导入 ${pendingCount} 个生词事件，并预填了视频 / 英字幕 / 中字幕 3 个默认 URL。\n\n请在下方精修后「导出 vocabulary JSON」并填回 courses.json 对应单集。`
+          );
+        }, 120);
+      }
+    } catch (e: any) {
+      console.warn('[TimelineEditor] 导入 pending-vocab 失败：', e);
+    } finally {
+      // 无论成功失败都清理，防止反复导入
+      try { localStorage.removeItem(PENDING_VOCAB_KEY); } catch {}
+    }
+  }, [pendingSource, pendingCount]);
 
   useEffect(() => {
     return () => {
@@ -273,9 +564,9 @@ export default function TimelineEditor() {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 overflow-hidden">
       {/* Top Bar */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex-shrink-0">
         <div className="flex items-center">
           <button 
             onClick={() => navigate('/content')}
@@ -288,7 +579,7 @@ export default function TimelineEditor() {
             <p className="text-sm text-slate-500">正在编辑视频 ID: {id}</p>
           </div>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex space-x-3 flex-wrap gap-2">
           <label className="flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors font-medium cursor-pointer border border-emerald-200">
             <Upload className="w-4 h-4 mr-2" />
             导入词汇表 (MD)
@@ -299,6 +590,20 @@ export default function TimelineEditor() {
               onChange={handleImportMarkdown} 
             />
           </label>
+          <button
+            onClick={handleCopyJsonToClipboard}
+            className="flex items-center px-4 py-2 bg-slate-50 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-medium border border-slate-200"
+          >
+            <FileJson className="w-4 h-4 mr-2" />
+            复制词汇表 JSON
+          </button>
+          <button
+            onClick={handleExportJson}
+            className="flex items-center px-4 py-2 bg-violet-50 text-violet-700 rounded-lg hover:bg-violet-100 transition-colors font-medium border border-violet-200"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            导出词汇表 JSON
+          </button>
           <button 
             onClick={startSimulation}
             className="flex items-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors font-medium"
@@ -317,9 +622,9 @@ export default function TimelineEditor() {
       </div>
 
       {/* Main Editor Area */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 w-full">
         {/* Left: Video Player */}
-        <div className="flex-[3] flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="flex-[3] min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="relative bg-black aspect-video w-full flex-shrink-0">
             <video
               ref={videoRef}
@@ -411,8 +716,50 @@ export default function TimelineEditor() {
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="https://..."
+                  placeholder="例如：/media/Lets_Hold_Hands_Penelope.mp4  或  https://cdn.example.com/xxx.mp4"
                 />
+                <div className="mt-2 space-y-2">
+                  {(
+                    /^[a-zA-Z]:[\\/]/.test(videoUrl.trim()) ||
+                    videoUrl.trim().startsWith('file://') ||
+                    videoUrl.split(/[\\/]/).some((seg) => /^[a-zA-Z]$/.test(seg))
+                  ) && (
+                    <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                      <div className="font-semibold mb-1">⚠️ 检测到本地磁盘路径，浏览器无法直接播放</div>
+                      <div className="mb-2 leading-relaxed">
+                        你填的是 <code className="bg-amber-100 px-1 rounded">{videoUrl}</code>。
+                        线上服务器没有你的 D 盘，<span className="font-medium">请把视频放到项目里再部署</span>。
+                      </div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {(() => {
+                          const m = videoUrl.match(/([^\\/]+?\.(mp4|mov|m4v|webm|mkv))\s*$/i);
+                          const suggested = m ? `/media/${m[1]}` : '';
+                          return suggested ? (
+                            <>
+                              <span className="text-amber-700">推荐线上地址：</span>
+                              <code className="bg-white border border-amber-200 px-2 py-1 rounded text-amber-900">{suggested}</code>
+                              <button
+                                type="button"
+                                onClick={() => setVideoUrl(suggested)}
+                                className="ml-auto inline-flex items-center px-3 py-1 rounded bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors"
+                              >
+                                一键替换成这个地址
+                              </button>
+                            </>
+                          ) : null;
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  <div className="rounded-md bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 leading-relaxed">
+                    <div className="font-semibold mb-1">💡 正确的填写姿势</div>
+                    <ol className="list-decimal list-inside space-y-0.5 text-blue-800/90">
+                      <li>把 mp4 丢到 <code className="bg-white px-1 rounded border border-blue-200">scripts/</code> 目录（和课件脚本一起）</li>
+                      <li>在项目根目录运行 <code className="bg-white px-1 rounded border border-blue-200">node scripts/merge-dist.js</code>（它会自动把 mp4 拷到 public/media）</li>
+                      <li>重新部署后，这里填 <code className="bg-white px-1 rounded border border-blue-200">/media/你的文件名.mp4</code> 就能在线播放了</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -443,7 +790,7 @@ export default function TimelineEditor() {
         </div>
 
         {/* Right: Timeline Events */}
-        <div className="flex-[2] flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="flex-[2] min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">
             <h3 className="font-bold text-slate-900">交互节点列表 ({events.length})</h3>
           </div>
