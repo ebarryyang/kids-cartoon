@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "codes": [
+    {
+      "id": "demo_peppa_01_001",
+      "code": "DEMO-PINK-PIG-001",
+      "seriesId": "peppa_01",
+      "seriesName": "粉红猪小妹 第一季",
+      "status": "active",
+      "createdAt": "2026-01-01",
+      "expiresAt": "2099-12-31"
+    },
+    {
+      "id": "demo_penelope_01_001",
+      "code": "DEMO-PENELOPE-001",
+      "seriesId": "penelope_01",
+      "seriesName": "蓝色小考拉 Penelope",
+      "status": "active",
+      "createdAt": "2026-01-01",
+      "expiresAt": "2099-12-31"
+    }
+  ]
+}

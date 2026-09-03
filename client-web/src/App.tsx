@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import Auth from './pages/Auth';
 import Login from './pages/Login';
 import VideoList from './pages/VideoList';
+import SeriesDetail from './pages/SeriesDetail';
 import Player from './pages/Player';
 import Discover from './pages/Discover';
 import Honor from './pages/Honor';
@@ -9,29 +10,40 @@ import Mine from './pages/Mine';
 import CustomTabBar from './components/CustomTabBar';
 import { useStore } from './store/useStore';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function AuthOnly({ children, redirectToLogin }: { children: React.ReactNode; redirectToLogin?: boolean }) {
   const user = useStore((state) => state.user);
-  const accessToken = useStore((state) => state.accessToken);
-  
-  // 未登录或未授权百度网盘，跳转到登录页
+  const location = useLocation();
+
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const { pathname, search, hash } = location;
+    const back = encodeURIComponent(`${pathname}${search}${hash}`);
+    return <Navigate to={`/login?redirect=${back}`} replace />;
   }
-  
-  // 已登录但未授权百度网盘，跳转到授权页
-  if (!accessToken) {
-    return <Navigate to="/auth" replace />;
+
+  if (redirectToLogin !== false) {
+    // noop
   }
-  
+
   return <>{children}</>;
 }
 
-// 需要百度网盘授权的页面（不包括授权页本身）
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthOnly>
+      <BaiduAuthRequired>{children}</BaiduAuthRequired>
+    </AuthOnly>
+  );
+}
+
+// 需要百度网盘授权的页面（不包括授权页本身、登录页、授权回调页）
 function BaiduAuthRequired({ children }: { children: React.ReactNode }) {
   const accessToken = useStore((state) => state.accessToken);
+  const location = useLocation();
+  const { pathname, search, hash } = location;
+  const redirect = `${pathname}${search}${hash}`;
   
   if (!accessToken) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to={`/auth?redirect=${encodeURIComponent(redirect)}`} replace />;
   }
   
   return <>{children}</>;
@@ -59,67 +71,31 @@ function AppContent() {
         {/* 登录注册页 - 无需登录 */}
         <Route path="/login" element={<Login />} />
         
-        {/* 百度网盘授权页 - 需已登录 */}
+        {/* 百度网盘授权页 - 需已登录（但不再要求已授权百度网盘，避免自循环） */}
         <Route 
           path="/auth" 
           element={
-            <ProtectedRoute>
+            <AuthOnly>
               <Auth />
-            </ProtectedRoute>
+            </AuthOnly>
+          } 
+        />
+        <Route 
+          path="/auth/callback" 
+          element={
+            <AuthOnly>
+              <Auth />
+            </AuthOnly>
           } 
         />
         
-        {/* 主页面 - 需登录+百度网盘授权 */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <BaiduAuthRequired>
-                <VideoList />
-              </BaiduAuthRequired>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/discover" 
-          element={
-            <ProtectedRoute>
-              <BaiduAuthRequired>
-                <Discover />
-              </BaiduAuthRequired>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/honor" 
-          element={
-            <ProtectedRoute>
-              <BaiduAuthRequired>
-                <Honor />
-              </BaiduAuthRequired>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/mine" 
-          element={
-            <ProtectedRoute>
-              <BaiduAuthRequired>
-                <Mine />
-              </BaiduAuthRequired>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/player" 
-          element={
-            <ProtectedRoute>
-              <BaiduAuthRequired>
-                <Player />
-              </BaiduAuthRequired>
-            </ProtectedRoute>
-          } 
-        />
+        {/* 主页面 - 需登录+百度网盘授权（ProtectedRoute = AuthOnly + BaiduAuthRequired，不再重复嵌套） */}
+        <Route path="/" element={<ProtectedRoute><VideoList /></ProtectedRoute>} />
+        <Route path="/series/:seriesId" element={<ProtectedRoute><SeriesDetail /></ProtectedRoute>} />
+        <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+        <Route path="/honor" element={<ProtectedRoute><Honor /></ProtectedRoute>} />
+        <Route path="/mine" element={<ProtectedRoute><Mine /></ProtectedRoute>} />
+        <Route path="/player" element={<ProtectedRoute><Player /></ProtectedRoute>} />
         
         {/* 默认重定向到登录页 */}
         <Route path="*" element={<Navigate to="/login" replace />} />

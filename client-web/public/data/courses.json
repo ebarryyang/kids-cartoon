@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "series": [
+    {
+      "seriesId": "penelope_01",
+      "seriesName": "蓝色小考拉 Penelope",
+      "description": "BBC 经典儿童英语启蒙动画，5-8 岁友好，语速慢发音清晰。",
+      "coverUrl": "",
+      "episodes": [
+        {
+          "episodeId": "Lets_Hold_Hands_Penelope",
+          "episodeName": "Let's Hold Hands 手拉手",
+          "description": "Penelope 和小伙伴们一起手拉手的启蒙故事。",
+          "durationSec": 0,
+          "videoUrl": "/media/Lets_Hold_Hands_Penelope.mp4",
+          "subtitleUrl": "/media/Lets_Hold_Hands_Penelope_en.vtt",
+          "subtitleZhUrl": "",
+          "vocabularyUrl": "/media/Lets_Hold_Hands_Penelope_vocabulary.json",
+          "hasExercise": true
+        }
+      ]
+    }
+  ]
+}
