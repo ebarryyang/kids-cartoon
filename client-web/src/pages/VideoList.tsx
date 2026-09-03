@@ -335,18 +335,6 @@ export default function VideoList() {
               扫卡片/输激活码 解锁新动画
             </span>
           </button>
-          <div
-            className="mt-3 flex items-center gap-1 bg-white/80 rounded-full px-3 py-1.5 shadow-sm border border-orange-100"
-          >
-            <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">1</span>
-            <span className="text-xs font-bold text-orange-600">点动画</span>
-            <span className="w-4 h-0.5 bg-orange-500"></span>
-            <span className="w-5 h-5 rounded-full bg-gray-300 text-white text-[10px] font-black flex items-center justify-center">2</span>
-            <span className="text-xs font-bold text-gray-500">选单集</span>
-            <span className="w-4 h-0.5 bg-gray-300"></span>
-            <span className="w-5 h-5 rounded-full bg-gray-300 text-white text-[10px] font-black flex items-center justify-center">3</span>
-            <span className="text-xs font-bold text-gray-500">播放</span>
-          </div>
         </div>
       </div>
 
@@ -430,14 +418,12 @@ export default function VideoList() {
                   )}
 
                   <div
-                    className={`text-center py-2 rounded-full text-sm font-black flex items-center justify-center gap-1 ${
+                    className={`text-center py-2 rounded-full text-sm font-black ${
                       unlocked ? 'text-orange-800' : 'bg-gray-200 text-gray-400'
                     }`}
                     style={unlocked ? { background: '#FFD13B', boxShadow: '0 4px 12px rgba(255, 209, 59, 0.4)' } : {}}
                   >
-                    {unlocked ? (
-                      <>选单集 <ChevronDown className="w-4 h-4" /></>
-                    ) : '未解锁'}
+                    {unlocked ? '选集播放' : '未解锁'}
                   </div>
                 </div>
               );
@@ -446,23 +432,22 @@ export default function VideoList() {
         </div>
       </main>
 
-      {/* 底部分集弹层 */}
+      {/* 居中选集弹窗 */}
       {openSheetSeriesId && openSheetSeries && (
-        <div className="fixed inset-0 z-40" onClick={() => setOpenSheetSeriesId(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4" onClick={() => setOpenSheetSeriesId(null)}>
           {/* 遮罩 */}
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          {/* 弹层 */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          {/* 弹窗 */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col animate-slide-up"
+            className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-3xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
-            style={{ boxShadow: '0 -16px 48px rgba(0,0,0,0.2)' }}
+            style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.3)', animation: 'modalIn 0.25s cubic-bezier(.2,.9,.3,1.1) both' }}
           >
-            {/* 拖拽把手 + 头部 */}
-            <div className="flex-shrink-0 px-4 pt-3 pb-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-yellow-50">
-              <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
-              <div className="flex items-start gap-3">
+            {/* 头部 */}
+            <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-yellow-50">
+              <div className="flex items-start gap-4">
                 <div
-                  className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-orange-200 to-yellow-200 flex items-center justify-center text-3xl"
+                  className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-orange-200 to-yellow-200 flex items-center justify-center text-4xl"
                   style={{ border: '3px solid #FFF' }}
                 >
                   {openSheetSeries.coverUrl ? (
@@ -472,38 +457,41 @@ export default function VideoList() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-lg font-black text-gray-900 truncate">{openSheetSeries.seriesName}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-xl font-black text-gray-900 truncate pt-1">{openSheetSeries.seriesName}</h3>
                     <button onClick={() => setOpenSheetSeriesId(null)}
-                      className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-500 hover:bg-white">
+                      className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-gray-500 hover:bg-white flex-shrink-0">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                      {(cloudEpisodes.length || 0) + (coursesEpisodes.length || 0)} 集
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700">
+                      共 {(cloudEpisodes.length || 0) + (coursesEpisodes.length || 0)} 集
                     </span>
                     {cloudEpisodes.length > 0 && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-0.5">
-                        <CheckCircle className="w-3 h-3" /> 已关联网盘
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700 flex items-center gap-0.5">
+                        <CheckCircle className="w-3 h-3" /> 已关联
                       </span>
                     )}
                   </div>
-                  {/* 最近播放提示 */}
+                  {/* 最近播放提示条 */}
                   {(() => {
                     const m = getSeriesMapping(openSheetSeriesId);
                     const recent = m?.episodes.find((ep) => ep.lastPlayedAt != null);
                     if (!recent) return null;
                     return (
-                      <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-600">
-                        <Clock className="w-3 h-3 text-orange-500" />
-                        <span className="truncate">上次播到：<b className="text-orange-600">{recent.filename.replace(/\.[^.]+$/, '')}</b> · {formatTimeAgo(recent.lastPlayedAt)}</span>
+                      <div className="mt-2 flex items-center gap-2 text-xs bg-orange-50 rounded-lg px-2.5 py-1.5">
+                        <Clock className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                        <span className="truncate text-gray-700">
+                          上次播到 <b className="text-orange-600">{recent.filename.replace(/\.[^.]+$/, '')}</b>
+                        </span>
+                        <span className="text-gray-400 flex-shrink-0">· {formatTimeAgo(recent.lastPlayedAt)}</span>
                         {recent.progress != null && recent.progress > 0 && recent.progress < 95 && (
                           <button
                             onClick={() => playCloudEpisode(openSheetSeriesId, recent, m!.episodes, m!.subtitleDlink)}
-                            className="ml-1 px-2 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-black flex-shrink-0 hover:bg-orange-600"
+                            className="ml-auto px-2.5 py-0.5 rounded-full bg-orange-500 text-white text-[11px] font-black flex-shrink-0 hover:bg-orange-600"
                           >
-                            继续 {Math.round(recent.progress)}%
+                            ▶ 继续 {Math.round(recent.progress)}%
                           </button>
                         )}
                       </div>
@@ -513,103 +501,132 @@ export default function VideoList() {
               </div>
             </div>
 
-            {/* 选集区域 */}
+            {/* 选集区域 - 列表方式 */}
             <div className="flex-1 overflow-y-auto px-4 py-3" style={{ backgroundColor: '#FFFDF5' }}>
               {sheetLoading && (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
                 </div>
               )}
 
               {!sheetLoading && !hasAnyEpisodes && (
-                <div className="bg-white rounded-2xl p-6 text-center border border-orange-100 mb-4">
-                  <div className="text-3xl mb-2">📂</div>
+                <div className="bg-white rounded-2xl p-8 text-center border border-orange-100">
+                  <div className="text-4xl mb-3">📂</div>
                   <div className="font-black text-gray-700 mb-1">还没有视频</div>
-                  <p className="text-xs text-gray-500 mb-4">点击下方按钮，把网盘里的动画片文件夹关联过来</p>
+                  <p className="text-sm text-gray-500 mb-5">把网盘里的动画片文件夹关联过来，就能看到所有集数</p>
                   <button onClick={openLinkingFromSheet}
-                    className="inline-flex items-center px-4 py-2 rounded-full text-white text-sm font-black shadow-sm"
+                    className="inline-flex items-center px-5 py-2.5 rounded-full text-white font-black shadow-sm"
                     style={{ background: 'linear-gradient(135deg, #FFD13B 0%, #FF7D00 100%)', boxShadow: '0 4px 12px rgba(255, 125, 0, 0.3)' }}>
                     <Link2 className="w-4 h-4 mr-2" /> 关联网盘资源
                   </button>
                 </div>
               )}
 
-              {/* 网盘关联集 */}
+              {/* 网盘关联集 - 列表 */}
               {cloudEpisodes.length > 0 && (
                 <>
                   {(coursesEpisodes.length > 0) && (
-                    <h4 className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                      网盘资源 · {cloudEpisodes.length} 集
+                    <h4 className="text-sm font-black text-gray-600 mb-2 flex items-center gap-1.5 px-1">
+                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                      网盘资源
                     </h4>
                   )}
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mb-3">
+                  <div className="space-y-2 mb-4">
                     {cloudEpisodes.map((ep, idx) => {
-                      const recent = ep.lastPlayedAt != null;
+                      const hasPlayed = ep.lastPlayedAt != null;
                       return (
-                        <button
+                        <div
                           key={ep.fsId}
+                          className="bg-white rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:shadow-md transition-all active:scale-[0.99] border border-gray-100"
+                          style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
                           onClick={() => {
                             const m = getSeriesMapping(openSheetSeriesId!);
                             if (m) playCloudEpisode(openSheetSeriesId!, ep, m.episodes, m.subtitleDlink);
                           }}
-                          className="relative bg-white rounded-xl p-2 flex flex-col items-center gap-1 cursor-pointer hover:shadow-md transition-all active:scale-95 border border-gray-100"
-                          style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
                         >
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center text-white text-base font-black shadow-sm">
+                          {/* 序号 */}
+                          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center text-white text-base font-black flex-shrink-0 shadow-sm">
                             {idx + 1}
                           </div>
-                          <div className="w-full text-[10px] font-bold text-gray-700 text-center truncate leading-tight">
-                            {ep.filename.replace(/\.[^.]+$/, '')}
+                          {/* 集名 + 进度 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-gray-900 truncate leading-tight">
+                              {ep.filename.replace(/\.[^.]+$/, '')}
+                            </div>
+                            {hasPlayed ? (
+                              <>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${ep.progress ?? 0}%` }} />
+                                  </div>
+                                  <span className="text-[11px] font-bold text-orange-600 flex-shrink-0">
+                                    {Math.round(ep.progress ?? 0)}%
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  {formatTimeAgo(ep.lastPlayedAt)}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[11px] text-gray-400 mt-1">未播放 · {formatSize(ep.size)}</div>
+                            )}
                           </div>
-                          {/* 进度条 */}
-                          {(ep.progress ?? 0) > 0 && (
-                            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-orange-400 rounded-full" style={{ width: `${ep.progress}%` }} />
-                            </div>
-                          )}
-                          {recent && (
-                            <div className="text-[9px] text-orange-500 font-bold flex items-center gap-0.5">
-                              <Clock className="w-2 h-2" />
-                              {formatTimeAgo(ep.lastPlayedAt)}
-                            </div>
-                          )}
-                        </button>
+                          {/* 播放按钮 */}
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                            hasPlayed && (ep.progress ?? 0) > 0 && (ep.progress ?? 0) < 95
+                              ? 'bg-orange-500'
+                              : 'bg-blue-500'
+                          }`}>
+                            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 </>
               )}
 
-              {/* courses 静态集 */}
+              {/* courses 静态集 - 列表 */}
               {coursesEpisodes.length > 0 && (
                 <>
                   {cloudEpisodes.length > 0 && (
-                    <h4 className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1 mt-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                      课程课件 · {coursesEpisodes.length} 集
+                    <h4 className="text-sm font-black text-gray-600 mb-2 flex items-center gap-1.5 px-1 mt-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                      课程课件
                     </h4>
                   )}
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mb-3">
+                  <div className="space-y-2 mb-2">
                     {coursesEpisodes.map((ep, idx) => (
-                      <button
+                      <div
                         key={String(ep.episodeId)}
-                        onClick={() => playCourseEpisode(openSheetSeriesId!, ep)}
-                        className="relative bg-white rounded-xl p-2 flex flex-col items-center gap-1 cursor-pointer hover:shadow-md transition-all active:scale-95 border border-gray-100"
-                        style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
+                        onClick={() => ep.videoUrl && playCourseEpisode(openSheetSeriesId!, ep)}
+                        className={`rounded-2xl p-3 flex items-center gap-3 transition-all border ${
+                          ep.videoUrl
+                            ? 'bg-white cursor-pointer hover:shadow-md border-gray-100 active:scale-[0.99]'
+                            : 'bg-gray-50 cursor-not-allowed border-gray-50 opacity-60'
+                        }`}
+                        style={{ boxShadow: ep.videoUrl ? '0 2px 6px rgba(0,0,0,0.04)' : undefined }}
                       >
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-base font-black shadow-sm ${
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white text-base font-black flex-shrink-0 shadow-sm ${
                           ep.videoUrl ? 'bg-gradient-to-br from-orange-400 to-yellow-400' : 'bg-gradient-to-br from-gray-300 to-gray-400'
                         }`}>
                           {idx + 1}
                         </div>
-                        <div className="w-full text-[10px] font-bold text-gray-700 text-center truncate leading-tight">
-                          {ep.title || ep.episodeId}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-gray-900 truncate">
+                            {ep.title || ep.episodeId}
+                          </div>
+                          <div className={`text-[11px] mt-1 ${ep.videoUrl ? 'text-green-600' : 'text-gray-400'}`}>
+                            {ep.videoUrl ? '✓ 视频已就绪' : '待配置视频'}
+                          </div>
                         </div>
-                        <div className={`text-[9px] font-bold ${ep.videoUrl ? 'text-green-600' : 'text-gray-400'}`}>
-                          {ep.videoUrl ? '就绪' : '待配置'}
-                        </div>
-                      </button>
+                        {ep.videoUrl && (
+                          <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </>
@@ -618,9 +635,9 @@ export default function VideoList() {
 
             {/* 底部操作栏 */}
             {cloudEpisodes.length > 0 && (
-              <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 bg-white">
+              <div className="flex-shrink-0 px-5 py-3 border-t border-gray-100 bg-white">
                 <button onClick={openLinkingFromSheet}
-                  className="w-full py-2 rounded-full bg-white border-2 border-orange-200 text-orange-700 text-sm font-bold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
+                  className="w-full py-2.5 rounded-full bg-white border-2 border-orange-200 text-orange-700 text-sm font-bold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
                   <FolderOpen className="w-4 h-4" /> 重新关联网盘资源
                 </button>
               </div>
@@ -742,11 +759,10 @@ export default function VideoList() {
           from { transform: scale(0.8); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
-        @keyframes slide-up {
-          from { transform: translateY(100%); opacity: 0.5; }
-          to { transform: translateY(0); opacity: 1; }
+        @keyframes modalIn {
+          from { transform: scale(0.92); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
         }
-        .animate-slide-up { animation: slide-up 0.25s cubic-bezier(.2,.9,.3,1.1) both; }
       `}</style>
     </div>
   );

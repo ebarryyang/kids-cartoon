@@ -253,32 +253,13 @@ export default function SeriesDetail() {
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-orange-100">
         <div className="max-w-4xl mx-auto px-4 pt-3 pb-2">
           {/* 面包屑 */}
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-1.5">
+          <div className="flex items-center gap-1 text-sm">
             <button
               onClick={() => navigate('/')}
               className="flex items-center gap-1 font-bold text-orange-600 hover:text-orange-700 transition-colors"
             >
-              🏠 我的动画乐园
+              ← 返回乐园
             </button>
-            <span className="text-gray-300">›</span>
-            <span className="font-bold text-gray-800 truncate max-w-[200px]">{series.seriesName}</span>
-          </div>
-          {/* 步骤进度 */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">1</span>
-              <span className="text-xs font-bold text-orange-600">选动画片</span>
-            </div>
-            <span className="w-4 h-0.5 bg-orange-500"></span>
-            <div className="flex items-center gap-1">
-              <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">2</span>
-              <span className="text-xs font-bold text-orange-600">选单集</span>
-            </div>
-            <span className="w-4 h-0.5 bg-gray-300"></span>
-            <div className="flex items-center gap-1">
-              <span className="w-5 h-5 rounded-full bg-gray-300 text-white text-[10px] font-black flex items-center justify-center">3</span>
-              <span className="text-xs font-bold text-gray-400">播放</span>
-            </div>
           </div>
         </div>
       </div>

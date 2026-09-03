@@ -1007,14 +1007,6 @@ export default function Player() {
               </button>
             </div>
           </div>
-          {/* 步骤进度条（半透明） */}
-          <div className="flex items-center gap-1.5 mt-2 px-1">
-            <span className="w-4 h-4 rounded-full bg-orange-400 text-white text-[9px] font-black flex items-center justify-center">1</span>
-            <span className="w-3 h-0.5 bg-orange-400/50"></span>
-            <span className="w-4 h-4 rounded-full bg-orange-400 text-white text-[9px] font-black flex items-center justify-center">2</span>
-            <span className="w-3 h-0.5 bg-orange-400"></span>
-            <span className="w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center shadow-md">3</span>
-          </div>
         </div>
 
         {/* 底部控制栏 */}
