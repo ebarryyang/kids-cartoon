@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { getCourseDetail, type CourseMaterial, type EpisodeMaterial } from '../lib/courseApi';
+import { getCourseDetail, type CourseMaterial, type EpisodeMaterial, getEpisodeTitle } from '../lib/courseApi';
 import { getFileList, getFileMetas } from '../lib/baiduApi';
-import type { EpisodeFile } from '../store/types';
+import type { EpisodeFile, PanFile } from '../store/types';
 import {
-  ArrowLeft, Play, Loader2, Link2, FolderOpen, Film, Check, X,
-  Home, ArrowUp, RefreshCw, ChevronRight, Folder, Lock
+  Loader2, Link2, Film, Check, X,
+  Home, ArrowUp, RefreshCw, ChevronRight, Folder
 } from 'lucide-react';
 
 const VIDEO_EXT_RE = /\.(mp4|mkv|avi|mov|m4v|flv|wmv|ts|webm)$/i;
 const DEFAULT_DIR = '/我的应用数据/英语宝贝动画宝';
 
-function isDir(v: any): boolean {
+function isDir(v: PanFile | null | undefined): boolean {
   return Number(v?.isdir ?? 0) === 1;
 }
 
@@ -42,10 +42,10 @@ export default function SeriesDetail() {
   // 网盘关联弹窗
   const [linkingOpen, setLinkingOpen] = useState(false);
   const [currentDir, setCurrentDir] = useState(DEFAULT_DIR);
-  const [panFiles, setPanFiles] = useState<any[]>([]);
+  const [panFiles, setPanFiles] = useState<PanFile[]>([]);
   const [panLoading, setPanLoading] = useState(false);
   const [panError, setPanError] = useState('');
-  const [selectedFile, setSelectedFile] = useState<any | null>(null);
+  const [selectedFile, setSelectedFile] = useState<PanFile | null>(null);
   const [linking, setLinking] = useState(false);
 
   const mapping = seriesId ? getSeriesMapping(seriesId) : undefined;
@@ -98,7 +98,7 @@ export default function SeriesDetail() {
       }
       const errno = Number(data.errno ?? data.error_code ?? 0);
       if (errno === 0) {
-        const list = Array.isArray(data.list) ? data.list : [];
+        const list: PanFile[] = Array.isArray(data.list) ? data.list : [];
         setPanFiles(list);
         if (!selectedFile || !list.find((x) => String(x.fs_id) === String(selectedFile.fs_id))) {
           const firstFolder = list.find((f) => isDir(f));
@@ -127,13 +127,13 @@ export default function SeriesDetail() {
     if (!seriesId || !selectedFile || !accessToken) return;
     try {
       setLinking(true);
-      let filesToProcess: any[] = [];
+      let filesToProcess: PanFile[] = [];
       const selectedIsDir = isDir(selectedFile);
       if (selectedIsDir) {
         const dirPath = resolveFolderPath(selectedFile);
         const data = await getFileList(accessToken, dirPath);
         if (Number(data?.errno ?? 0) === 0) {
-          filesToProcess = (data.list || []).filter((f: any) => !isDir(f) && VIDEO_EXT_RE.test(f.server_filename || ''));
+          filesToProcess = ((data.list || []) as PanFile[]).filter((f) => !isDir(f) && VIDEO_EXT_RE.test(f.server_filename || ''));
         } else {
           alert(`进入目录失败 [errno=${data?.errno}]`);
           return;
@@ -177,7 +177,7 @@ export default function SeriesDetail() {
     }
   };
 
-  const handleEpisodeClick = (episode: EpisodeMaterial, idx: number) => {
+  const handleEpisodeClick = (episode: EpisodeMaterial) => {
     navigate('/player', { state: { seriesId, episodeId: episode.episodeId } });
   };
 
@@ -337,10 +337,10 @@ export default function SeriesDetail() {
                 {coursesEpisodes.map((ep, idx) => (
                   <button
                     key={String(ep.episodeId)}
-                    onClick={() => handleEpisodeClick(ep, idx)}
+                    onClick={() => handleEpisodeClick(ep)}
                     className="group bg-white rounded-xl p-2.5 flex flex-col items-center gap-1.5 cursor-pointer hover:shadow-md transition-all active:scale-95 border border-gray-100"
                     style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}
-                    title={ep.title || ep.episodeId}
+                    title={getEpisodeTitle(ep)}
                   >
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-black flex-shrink-0 shadow-sm ${
                       ep.videoUrl
@@ -350,7 +350,7 @@ export default function SeriesDetail() {
                       {idx + 1}
                     </div>
                     <div className="w-full text-[11px] font-bold text-gray-700 text-center truncate leading-tight" style={{ maxWidth: '100%' }}>
-                      {ep.title || ep.episodeId}
+                      {getEpisodeTitle(ep)}
                     </div>
                     <div className={`text-[10px] font-bold ${ep.videoUrl ? 'text-green-600' : 'text-gray-400'}`}>
                       {ep.videoUrl ? '就绪' : '待配置'}

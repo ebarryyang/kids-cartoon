@@ -28,13 +28,22 @@ function staticFindEpisode(s: CourseMaterial, epId: string) {
 
 export interface EpisodeMaterial {
   episodeId: string;
-  title: string;
+  // 后台生成的 courses.json 用的是 episodeName，早期接口/网盘资料用的是 title，
+  // 两个字段都可选，读标题统一走 getEpisodeTitle()，避免显示成原始 episodeId。
+  episodeName?: string;
+  title?: string;
   videoUrl?: string;
   subtitleUrl?: string;
   subtitleZhUrl?: string;
   vocabularyUrl?: string;
   hasExercise?: boolean;
   exerciseCount?: number;
+}
+
+/** 统一取单集展示名：episodeName > title > episodeId */
+export function getEpisodeTitle(ep?: Pick<EpisodeMaterial, 'episodeName' | 'title' | 'episodeId'> | null): string {
+  if (!ep) return '';
+  return ep.episodeName || ep.title || String(ep.episodeId ?? '');
 }
 
 export interface CourseMaterial {

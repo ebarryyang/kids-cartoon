@@ -57,3 +57,19 @@ export const getProxiedVideoUrl = (cdnUrl: string) => {
   }
   return cdnUrl;
 };
+
+// 需要流式/Range请求的二进制扩展名（会被 Vercel Password Protection 错误拦截）
+const BINARY_STREAM_EXT = /\.(mp4|mov|m4v|webm|mp3|wav|ogg|flac|aac)$/i;
+
+// 把本地 /media/xxx.mp4、/media/xxx.mp3 等需要 Range 请求的 URL
+// 转换为 /api/media-proxy?path=... 代理，绕过 Vercel Password Protection 拦截
+export const getProxiedStaticUrl = (url: string): string => {
+  if (!url) return url;
+  // 已经是代理 URL 或完整外链（http/https/data:），不处理
+  if (url.startsWith('/api/') || /^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+  // 只处理本地二进制流式文件
+  if (BINARY_STREAM_EXT.test(url)) {
+    return `/api/media-proxy?path=${encodeURIComponent(url)}`;
+  }
+  return url;
+};

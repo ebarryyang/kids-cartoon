@@ -29,8 +29,13 @@ interface AppState {
   seriesMappings: SeriesMapping[];
   setSeriesMapping: (seriesId: string, mapping: Omit<SeriesMapping, 'seriesId'>) => void;
   getSeriesMapping: (seriesId: string) => SeriesMapping | undefined;
-  // 更新单集进度
-  updateEpisodeProgress: (seriesId: string, fsId: number, progress: number) => void;
+  // 更新单集进度（episodeKey：网盘模式传 number fs_id，courses 模式传 string episodeId）
+  updateEpisodeProgress: (
+    seriesId: string,
+    episodeKey: string | number,
+    progress: number,
+    filename?: string
+  ) => void;
   // 获取某个系列最近播放的一集（按 lastPlayedAt 降序）
   getRecentlyPlayedEpisode: (seriesId: string) => EpisodeFile | undefined;
   // 从发现页添加到乐园
@@ -80,24 +85,45 @@ export const useStore = create<AppState>()(
       getSeriesMapping: (seriesId: string) => {
         return get().seriesMappings.find(m => m.seriesId === seriesId);
       },
-      updateEpisodeProgress: (seriesId: string, fsId: number, progress: number) => {
+      updateEpisodeProgress: (seriesId, episodeKey, progress, filename) => {
+        const key = String(episodeKey);
+        const now = Date.now();
         const current = get().seriesMappings;
-        const updated = current.map(m => {
-          if (m.seriesId !== seriesId) return m;
-          const now = Date.now();
-          const episodes = m.episodes.map(ep =>
-            ep.fsId === fsId
-              ? {
-                  ...ep,
-                  progress,
-                  lastPlayedAt: now,
-                  playCount: (ep.playCount ?? 0) + 1,
-                }
-              : ep
-          );
-          return { ...m, episodes };
-        });
-        set({ seriesMappings: updated });
+        const idx = current.findIndex(m => m.seriesId === seriesId);
+
+        // courses 模式下 seriesMappings 里还没有该系列（用户没点过「加入乐园」），
+        // 这里自动建一条，保证播放进度/上次播放时间同样能记录下来。
+        if (idx === -1) {
+          set({
+            seriesMappings: [
+              ...current,
+              {
+                seriesId,
+                episodes: [
+                  { fsId: key, filename: filename || key, progress, lastPlayedAt: now, playCount: 1 },
+                ],
+              },
+            ],
+          });
+          return;
+        }
+
+        const next = [...current];
+        const m = next[idx];
+        const episodes = [...m.episodes];
+        const epIdx = episodes.findIndex(ep => String(ep.fsId) === key);
+        if (epIdx === -1) {
+          episodes.push({ fsId: key, filename: filename || key, progress, lastPlayedAt: now, playCount: 1 });
+        } else {
+          episodes[epIdx] = {
+            ...episodes[epIdx],
+            progress,
+            lastPlayedAt: now,
+            playCount: (episodes[epIdx].playCount ?? 0) + 1,
+          };
+        }
+        next[idx] = { ...m, episodes };
+        set({ seriesMappings: next });
       },
       getRecentlyPlayedEpisode: (seriesId: string) => {
         const mapping = get().seriesMappings.find(m => m.seriesId === seriesId);

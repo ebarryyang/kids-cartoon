@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { getCourseList, getCourseDetail, type CourseMaterial, type EpisodeMaterial } from '../lib/courseApi';
+import { getCourseList, getCourseDetail, type CourseMaterial, type EpisodeMaterial, getEpisodeTitle } from '../lib/courseApi';
 import { redeemActivationCode } from '../lib/activationCodes';
-import { Loader2, Check, Lock, X, Play, Clock, ChevronDown, FolderOpen, Link2, CheckCircle } from 'lucide-react';
+import { Loader2, Check, Lock, X, Play, Clock, FolderOpen, Link2, CheckCircle } from 'lucide-react';
 import { getFileList, getFileMetas } from '../lib/baiduApi';
-import type { EpisodeFile } from '../store/types';
+import type { EpisodeFile, PanFile } from '../store/types';
 
 interface SeriesCard {
   seriesId: string;
@@ -50,7 +50,7 @@ function formatSize(size?: number): string {
 
 const VIDEO_EXT_RE = /\.(mp4|mkv|avi|mov|m4v|flv|wmv|ts|webm)$/i;
 const DEFAULT_DIR = '/我的应用数据/英语宝贝动画宝';
-function isDir(v: any): boolean { return Number(v?.isdir ?? 0) === 1; }
+function isDir(v: PanFile | null | undefined): boolean { return Number(v?.isdir ?? 0) === 1; }
 
 export default function VideoList() {
   const {
@@ -78,10 +78,10 @@ export default function VideoList() {
   // 网盘关联弹窗状态
   const [linkingOpen, setLinkingOpen] = useState(false);
   const [currentDir, setCurrentDir] = useState(DEFAULT_DIR);
-  const [panFiles, setPanFiles] = useState<any[]>([]);
+  const [panFiles, setPanFiles] = useState<PanFile[]>([]);
   const [panLoading, setPanLoading] = useState(false);
   const [panError, setPanError] = useState('');
-  const [selectedFile, setSelectedFile] = useState<any | null>(null);
+  const [selectedFile, setSelectedFile] = useState<PanFile | null>(null);
   const [linking, setLinking] = useState(false);
 
   // 动态加载动画片卡片
@@ -197,7 +197,7 @@ export default function VideoList() {
       if (!data) { setPanError('百度未返回数据'); setPanFiles([]); return; }
       const errno = Number(data.errno ?? data.error_code ?? 0);
       if (errno === 0) {
-        const list = Array.isArray(data.list) ? data.list : [];
+        const list: PanFile[] = Array.isArray(data.list) ? data.list : [];
         setPanFiles(list);
         if (!selectedFile || !list.find((x) => String(x.fs_id) === String(selectedFile.fs_id))) {
           setSelectedFile(list.find((f) => isDir(f)) || list[0] || null);
@@ -221,14 +221,14 @@ export default function VideoList() {
     if (!openSheetSeriesId || !selectedFile || !accessToken) return;
     try {
       setLinking(true);
-      let filesToProcess: any[] = [];
+      let filesToProcess: PanFile[] = [];
       const selectedIsDir = isDir(selectedFile);
       if (selectedIsDir) {
         const base = currentDir === '/' ? '' : currentDir;
         const dirPath = typeof selectedFile.path === 'string' && selectedFile.path ? selectedFile.path : `${base}/${selectedFile.server_filename}`;
         const data = await getFileList(accessToken, dirPath);
         if (Number(data?.errno ?? 0) === 0) {
-          filesToProcess = (data.list || []).filter((f: any) => !isDir(f) && VIDEO_EXT_RE.test(f.server_filename || ''));
+          filesToProcess = ((data.list || []) as PanFile[]).filter((f) => !isDir(f) && VIDEO_EXT_RE.test(f.server_filename || ''));
         } else { alert(`进入目录失败 [errno=${data?.errno}]`); return; }
       } else if (VIDEO_EXT_RE.test(selectedFile.server_filename || '')) {
         filesToProcess = [selectedFile];
@@ -254,8 +254,6 @@ export default function VideoList() {
     } catch (err: any) { alert(err?.message || '关联失败'); }
     finally { setLinking(false); }
   };
-
-  const breadcrumbParts = currentDir.split('/').filter(Boolean);
 
   // ===== 弹层数据 =====
   const openSheetSeries = useMemo(
@@ -615,7 +613,7 @@ export default function VideoList() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-bold text-gray-900 truncate">
-                            {ep.title || ep.episodeId}
+                            {getEpisodeTitle(ep)}
                           </div>
                           <div className={`text-[11px] mt-1 ${ep.videoUrl ? 'text-green-600' : 'text-gray-400'}`}>
                             {ep.videoUrl ? '✓ 视频已就绪' : '待配置视频'}

@@ -2,13 +2,14 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import type { EpisodeFile } from '../store/types';
-import { resolveRedirect, getProxiedVideoUrl } from '../lib/baiduApi';
+import { resolveRedirect, getProxiedVideoUrl, getProxiedStaticUrl } from '../lib/baiduApi';
 import {
   getEpisodeMaterial,
   getCourseDetail,
   type EpisodeMaterial,
   loadVocabularyEvents,
   type VocabularyEvent,
+  getEpisodeTitle,
 } from '../lib/courseApi';
 import {
   ArrowLeft, Play, Pause, Volume2, Maximize,
@@ -242,6 +243,8 @@ export default function Player() {
   const [subtitleLang, setSubtitleLang] = useState<'off' | 'en' | 'zh'>('en');
   const [subtitleZhUrl, setSubtitleZhUrl] = useState<string>('');
   const textTracksRef = useRef<{ en?: TextTrack | null; zh?: TextTrack | null }>({});
+  // 记录上次落库进度时的整数秒，避免 timeupdate（~250ms 一次）把 playCount 重复累加
+  const lastSavedSecRef = useRef<number>(-1);
 
   // 下载并解析 en subtitle VTT → 与 vocabulary 事件匹配 → 把每个词的触发时刻从 vocabulary.time 改到"句子结束+0.2s"
   useEffect(() => {
@@ -295,7 +298,12 @@ export default function Player() {
     }
     let alive = true;
     (async () => {
-      const arr = await loadVocabularyEvents(vocabularyUrl);
+      const raw = await loadVocabularyEvents(vocabularyUrl);
+      // 对每个事件的 audioUrl（mp3 发音文件）也做代理转换
+      const arr = raw.map(evt => ({
+        ...evt,
+        audioUrl: evt.audioUrl ? getProxiedStaticUrl(evt.audioUrl) : evt.audioUrl,
+      }));
       console.log('[Player] loadVocabularyEvents done url=', vocabularyUrl, 'count=', arr.length, 'first=', arr[0] || null);
       if (alive) {
         setVocabularyEvents(arr);
@@ -471,11 +479,11 @@ export default function Player() {
               if (materialRes.success && materialRes.data) {
                 const material: EpisodeMaterial = materialRes.data;
                 if (material.subtitleUrl && !platformSubtitleLoaded) {
-                  setSubtitleUrl(material.subtitleUrl);
+                  setSubtitleUrl(getProxiedStaticUrl(material.subtitleUrl));
                   setPlatformSubtitleLoaded(true);
                 }
-                if (material.vocabularyUrl) setVocabularyUrl(material.vocabularyUrl);
-                setHasExercise(material.hasExercise);
+                if (material.vocabularyUrl) setVocabularyUrl(getProxiedStaticUrl(material.vocabularyUrl));
+                setHasExercise(!!material.hasExercise);
                 setExerciseCount(material.exerciseCount || 0);
               }
             } catch (err) {
@@ -533,10 +541,10 @@ export default function Player() {
             setError(`单集「${ep.episodeName || ep.episodeId}」没有配置视频源 URL，请在后台「课程资料管理」填好视频源并重新部署 courses.json。`);
             return;
           }
-          setVideoUrl(ep.videoUrl);
-          if (ep.subtitleUrl) { setSubtitleUrl(ep.subtitleUrl); setPlatformSubtitleLoaded(true); }
-          if ((ep as any).subtitleZhUrl) { setSubtitleZhUrl(String((ep as any).subtitleZhUrl)); }
-          if (ep.vocabularyUrl) setVocabularyUrl(ep.vocabularyUrl);
+          setVideoUrl(getProxiedStaticUrl(ep.videoUrl));
+          if (ep.subtitleUrl) { setSubtitleUrl(getProxiedStaticUrl(ep.subtitleUrl)); setPlatformSubtitleLoaded(true); }
+          if ((ep as any).subtitleZhUrl) { setSubtitleZhUrl(getProxiedStaticUrl(String((ep as any).subtitleZhUrl))); }
+          if (ep.vocabularyUrl) setVocabularyUrl(getProxiedStaticUrl(ep.vocabularyUrl));
           setHasExercise(!!ep.hasExercise);
           setExerciseCount(ep.exerciseCount || 0);
           if (ep.episodeName && !filename) {
@@ -556,8 +564,9 @@ export default function Player() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dlink, accessToken, navigate, subtitleDlink, seriesId, episodeFsId, platformSubtitleLoaded]);
 
-  // 自动播放
+  // 自动播放（切集时 videoUrl 变化 → 顺带重置进度落库的去重标记）
   useEffect(() => {
+    lastSavedSecRef.current = -1;
     if (videoUrl && videoRef.current) {
       videoRef.current.play().then(() => {
         setIsPlaying(true);
@@ -588,7 +597,11 @@ export default function Player() {
       const now = video.currentTime;
       setCurrentTime(now);
       // 每10秒保存一次进度（courses-only 模式也用 effectiveEpisodeId 写入）
-      if (seriesId && effectiveEpisodeId && Math.floor(now) % 10 === 0) {
+      // timeupdate 约 250ms 触发一次，同一个整数秒会命中多次，用 lastSavedSecRef 去重，
+      // 否则 playCount 会被重复累加（每 10 秒窗口内 +4 左右）。
+      const sec = Math.floor(now);
+      if (seriesId && effectiveEpisodeId && sec % 10 === 0 && sec !== lastSavedSecRef.current) {
+        lastSavedSecRef.current = sec;
         const progress = (now / (video.duration || 1)) * 100;
         updateEpisodeProgress(seriesId, effectiveEpisodeId, progress);
       }
@@ -1164,7 +1177,7 @@ export default function Player() {
                                     ? 'bg-white/15 text-white/80 hover:bg-white/30 hover:text-white'
                                     : 'bg-white/5 text-white/30 cursor-not-allowed'
                               }`}
-                              title={ep.episodeName || ep.episodeId}
+                              title={getEpisodeTitle(ep)}
                               disabled={!ep.videoUrl}
                             >
                               {idx + 1}
