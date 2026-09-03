@@ -91,6 +91,18 @@ function findEnclosingCue(cues: VttCue[], t: number): VttCue | null {
   return cues[ans];
 }
 
+// 模块级：预加载 speechSynthesis voices（Chrome 异步加载，首次 getVoices() 可能返回 []）
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  try {
+    // 立即尝试一次（Safari 同步返回）
+    window.speechSynthesis.getVoices();
+    // 监听异步加载完成（Chrome/Edge）
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.getVoices();
+    };
+  } catch (_) {}
+}
+
 function getPreferredVoice(lang: 'en' | 'zh'): SpeechSynthesisVoice | null {
   try {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
@@ -115,6 +127,9 @@ function getPreferredVoice(lang: 'en' | 'zh'): SpeechSynthesisVoice | null {
   }
 }
 
+// 当前正在播放的 utterance 引用（防止 GC 回收导致静默）
+let _currentUtterance: SpeechSynthesisUtterance | null = null;
+
 function speak(text: string, opts?: { slow?: boolean; lang?: 'en' | 'zh'; onEnd?: () => void; onError?: () => void }) {
   try {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -122,6 +137,9 @@ function speak(text: string, opts?: { slow?: boolean; lang?: 'en' | 'zh'; onEnd?
       return;
     }
     if (!text) { opts?.onEnd?.(); return; }
+    const synth = window.speechSynthesis;
+    // 先停掉之前的
+    synth.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const langTag: 'en-US' | 'zh-CN' = opts?.lang === 'zh' ? 'zh-CN' : 'en-US';
     u.lang = langTag;
@@ -130,16 +148,30 @@ function speak(text: string, opts?: { slow?: boolean; lang?: 'en' | 'zh'; onEnd?
     u.volume = 1;
     const v = getPreferredVoice(opts?.lang || 'en');
     if (v) u.voice = v;
+    else u.lang = langTag; // 确保语言标签设置正确，让浏览器选默认 voice
     let ended = false;
     const finish = (ok: boolean) => {
       if (ended) return;
       ended = true;
+      if (_currentUtterance === u) _currentUtterance = null;
       if (ok) opts?.onEnd?.(); else opts?.onError?.();
     };
     u.onend = () => finish(true);
-    u.onerror = () => finish(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    u.onerror = (e) => {
+      console.warn('[Player] speechSynthesis utterance error:', e?.error);
+      finish(false);
+    };
+    u.onboundary = () => { /* noop to keep utterance alive */ };
+    _currentUtterance = u;
+    synth.speak(u);
+    // 某些浏览器需要短暂延迟才能真正开始播放
+    if (!synth.speaking) {
+      setTimeout(() => {
+        if (!ended && !synth.speaking) {
+          try { synth.speak(u); } catch (_) {}
+        }
+      }, 50);
+    }
   } catch (_) {
     opts?.onEnd?.();
   }

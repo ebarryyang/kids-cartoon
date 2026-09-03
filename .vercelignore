@@ -21,3 +21,9 @@ CoursewareTimelineEditor.vue
 InteractiveVideoPlayer.vue
 cloudDriveHelper.ts
 package-lock.json
+scripts/*.mp4
+scripts/*_audio/
+scripts/__pycache__/
+scripts/my_sf_key.txt
+scripts/_pipe_test2*
+scripts/pipeline-server.py
