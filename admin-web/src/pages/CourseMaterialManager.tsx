@@ -673,8 +673,8 @@ export default function CourseMaterialManager() {
 
               {/* 单集列表 */}
               {isExpanded && (
-                <div className="border-t border-slate-200">
-                  <table className="w-full text-left">
+                <div className="border-t border-slate-200 overflow-x-auto">
+                  <table className="w-full text-left min-w-[780px]">
                     <thead>
                       <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                         <th className="px-4 py-3 font-medium">单集</th>
