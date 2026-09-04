@@ -114,9 +114,13 @@ export function clearLocalOverrides(): void {
   localStorage.removeItem(LOCAL_OVERRIDE_KEY);
 }
 
+/** 生成最终写入 courses.json 的文本（下载与 GitHub 同步共用，保证两边内容完全一致） */
+export function buildCoursesJSON(courses: CourseMaterial[]): string {
+  return JSON.stringify({ version: 1, series: courses }, null, 2) + '\n';
+}
+
 export function downloadCoursesJSON(courses: CourseMaterial[]): void {
-  const payload = { version: 1, series: courses };
-  const json = JSON.stringify(payload, null, 2) + '\n';
+  const json = buildCoursesJSON(courses);
   const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

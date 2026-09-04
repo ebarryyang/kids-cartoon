@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, Key, Bot, Network, Volume2, Save, RefreshCw, Eye, EyeOff, CheckCircle2, AlertTriangle, ExternalLink, Sparkles } from 'lucide-react';
+import { Shield, Key, Bot, Network, Volume2, Save, RefreshCw, Eye, EyeOff, CheckCircle2, AlertTriangle, ExternalLink, Sparkles, Github } from 'lucide-react';
 import {
   AllProviderSettings,
   DEFAULT_SETTINGS,
@@ -8,6 +8,7 @@ import {
   resetSettings,
   saveSettings,
 } from '@/lib/settingsStore';
+import { getSyncToken, setSyncToken, checkGithubSync, COURSES_PATH, type SyncResult } from '@/lib/githubSync';
 
 type ProviderKey = 'siliconflow' | 'deepseek' | 'openaiCompat';
 
@@ -68,6 +69,10 @@ export default function Settings() {
   const [serverTest, setServerTest] = useState<{ state: 'idle' | 'running' | 'ok' | 'fail'; message?: string }>({
     state: 'idle',
   });
+  const [syncToken, setSyncTokenInput] = useState<string>(() => getSyncToken());
+  const [showSyncToken, setShowSyncToken] = useState(false);
+  const [githubTest, setGithubTest] = useState<SyncResult | null>(null);
+  const [testingGithub, setTestingGithub] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setSaved(false), 3000);
@@ -92,6 +97,22 @@ export default function Settings() {
     const def = resetSettings();
     setSettings(def);
     setSaved(true);
+  };
+
+  const testGithubSync = async () => {
+    const t = syncToken.trim();
+    if (!t) {
+      setGithubTest({ state: 'fail', message: '请先填写管理员口令' });
+      return;
+    }
+    setSyncToken(t); // 写入 localStorage，后续「同步到 GitHub」直接复用
+    setTestingGithub(true);
+    setGithubTest({ state: 'running' });
+    try {
+      setGithubTest(await checkGithubSync(COURSES_PATH));
+    } finally {
+      setTestingGithub(false);
+    }
   };
 
   const testProvider = async (k: ProviderKey) => {
@@ -408,6 +429,86 @@ export default function Settings() {
               使用方法：本机终端执行 <code>python scripts/pipeline-server.py</code>（保持窗口开启），
               然后勾选上方开关并点「测试 /health」验证连通，即可在「AI 课件制作向导」中使用服务模式。
             </p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-6 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center">
+              <Github className="w-5 h-5 mr-2 text-blue-600" />
+              GitHub 同步（后台保存 → 自动部署）
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              配置后，在「课程资料管理」点「同步到 GitHub」即可把 courses.json 直接提交到仓库，
+              Vercel 自动重新部署，免掉手工下载覆盖文件。
+            </p>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                管理员口令（ADMIN_SYNC_TOKEN）
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type={showSyncToken ? 'text' : 'password'}
+                  value={syncToken}
+                  placeholder="与 Vercel 环境变量 ADMIN_SYNC_TOKEN 一致"
+                  onChange={e => setSyncTokenInput(e.target.value)}
+                  onBlur={() => setSyncToken(syncToken.trim())}
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSyncToken(v => !v)}
+                  className="px-2.5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50"
+                  title={showSyncToken ? '隐藏' : '显示'}
+                >
+                  {showSyncToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                口令只保存在本机浏览器 localStorage，不会写进仓库。
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={testGithubSync}
+                disabled={testingGithub}
+                className="text-xs px-3 py-1.5 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testingGithub ? '测试中...' : '🔄 测试连接'}
+              </button>
+              {githubTest?.state === 'ok' && (
+                <span className="inline-flex items-center text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> {githubTest.message}
+                </span>
+              )}
+              {githubTest?.state === 'fail' && (
+                <span className="inline-flex items-start text-sm text-amber-600">
+                  <AlertTriangle className="w-4 h-4 mr-1 mt-0.5" /> {githubTest.message}
+                </span>
+              )}
+            </div>
+
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
+              <p className="font-medium text-slate-700">Vercel 端需要配置的环境变量：</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>
+                  <code>GITHUB_TOKEN</code>：GitHub Personal Access Token，需勾选{' '}
+                  <span className="font-medium">Contents: Read and write</span>
+                </li>
+                <li>
+                  <code>ADMIN_SYNC_TOKEN</code>：自定义口令，与上方填写的一致
+                </li>
+                <li>
+                  可选：<code>GITHUB_OWNER</code> / <code>GITHUB_REPO</code> /{' '}
+                  <code>GITHUB_BRANCH</code>（默认 ebarryyang / kids-cartoon / main）
+                </li>
+              </ul>
+              <p className="text-slate-500 pt-1">添加后需在 Vercel 重新部署一次，环境变量才会生效。</p>
+            </div>
           </div>
         </div>
       </div>

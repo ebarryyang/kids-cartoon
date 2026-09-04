@@ -3,9 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Mic, FileText, Plus, Search, ChevronRight,
   Upload, Eye, Trash2, Edit3, Save, X, PlayCircle,
-  FolderOpen, AlertTriangle, Lightbulb, RefreshCw, Download, KeyRound, Wand2, Sparkles
+  FolderOpen, AlertTriangle, Lightbulb, RefreshCw, Download, KeyRound, Wand2, Sparkles,
+  Github, ExternalLink, CheckCircle2, Loader2
 } from 'lucide-react';
-import { loadAllCourses, saveLocalOverrides, downloadCoursesJSON, addSeries as addSeriesDataLayer, patchEpisode } from '@/lib/coursesDataLayer';
+import {
+  loadAllCourses, saveLocalOverrides, downloadCoursesJSON, buildCoursesJSON,
+  addSeries as addSeriesDataLayer, patchEpisode,
+} from '@/lib/coursesDataLayer';
+import { commitToGithub, getSyncToken, COURSES_PATH, type SyncResult } from '@/lib/githubSync';
 
 interface EpisodeMaterial {
   episodeId: string;
@@ -188,6 +193,10 @@ export default function CourseMaterialManager() {
   const [assetIndex, setAssetIndex] = useState<{ path: string; name: string; sizeB?: number }[]>([]);
   const [refreshingAssets, setRefreshingAssets] = useState(false);
   const [picker, setPicker] = useState<PickerState>({ open: false, anchor: null, filter: '' });
+
+  // GitHub 同步状态
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
 
   // 1) 初始化：从 coursesDataLayer 读（静态 JSON + localStorage 覆盖）
   useEffect(() => {
@@ -429,6 +438,43 @@ export default function CourseMaterialManager() {
 
   const downloadJson = () => downloadCoursesJSON(courses);
 
+  // 一键把当前课程数据 commit 到 GitHub → Vercel 自动部署 → 前台（H5 + 小程序）生效
+  const syncToGithub = async () => {
+    if (!getSyncToken()) {
+      setSyncResult({
+        state: 'fail',
+        message: '请先在「系统设置 → GitHub 同步」填写管理员口令（需与 Vercel 环境变量 ADMIN_SYNC_TOKEN 一致）。',
+      });
+      return;
+    }
+    if (!courses.length) {
+      setSyncResult({ state: 'fail', message: '当前没有课程数据，无需同步。' });
+      return;
+    }
+    const totalEpisodes = courses.reduce((n, c) => n + (c.episodes?.length || 0), 0);
+    if (
+      !window.confirm(
+        `即将把 ${courses.length} 个系列、共 ${totalEpisodes} 个单集提交到 GitHub 仓库。\n\n` +
+          'Vercel 会自动重新部署，约 1 分钟后前台生效。确认继续？'
+      )
+    ) {
+      return;
+    }
+
+    setSyncing(true);
+    setSyncResult({ state: 'running' });
+    try {
+      const res = await commitToGithub({
+        content: buildCoursesJSON(courses),
+        path: COURSES_PATH,
+        message: `chore(data): 从管理端同步 courses.json（${courses.length} 个系列）`,
+      });
+      setSyncResult(res);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // === URL 辅助：本地路径判定 + 一键规范 ===
   function cleanUrlsInForm(form: Partial<EpisodeMaterial>): Partial<EpisodeMaterial> {
     const out = { ...form };
@@ -533,9 +579,20 @@ export default function CourseMaterialManager() {
             授权码管理
           </button>
           <button
+            onClick={syncToGithub}
+            disabled={syncing}
+            className="flex items-center px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            title="把当前课程数据直接提交到 GitHub 仓库，Vercel 自动重新部署，前台立即生效（免手工下载覆盖）"
+          >
+            {syncing
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <Github className="w-4 h-4 mr-2" />}
+            {syncing ? '同步中…' : '同步到 GitHub'}
+          </button>
+          <button
             onClick={downloadJson}
             className="flex items-center px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm"
-            title="把当前所有改动（含本地覆盖）导出成 courses.json，然后重新部署就能同步到前台 H5 和小程序"
+            title="把当前所有改动（含本地覆盖）导出成 courses.json，手动覆盖 client-web/public/data/ 后重新部署"
           >
             <Download className="w-4 h-4 mr-2" />
             下载 courses.json
@@ -566,6 +623,48 @@ export default function CourseMaterialManager() {
           </button>
         </div>
       </div>
+
+      {/* GitHub 同步结果 */}
+      {syncResult?.state === 'running' && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          正在提交到 GitHub…
+        </div>
+      )}
+      {syncResult && syncResult.state !== 'running' && (
+        <div
+          className={`rounded-xl border p-4 ${
+            syncResult.state === 'ok'
+              ? 'bg-emerald-50 border-emerald-200'
+              : 'bg-amber-50 border-amber-200'
+          }`}
+        >
+          <div className="flex items-start gap-2 text-sm">
+            {syncResult.state === 'ok' ? (
+              <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-600 flex-shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+            )}
+            <div
+              className={
+                syncResult.state === 'ok' ? 'text-emerald-800' : 'text-amber-800'
+              }
+            >
+              <p>{syncResult.message}</p>
+              {syncResult.commitUrl && (
+                <a
+                  href={syncResult.commitUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium underline"
+                >
+                  查看本次 commit <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -993,13 +1092,13 @@ export default function CourseMaterialManager() {
         </div>
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
           <h3 className="text-base font-bold text-emerald-900 mb-2 flex items-center gap-2">
-            <FolderOpen className="w-4 h-4" /> 改动如何同步到前台（H5 + 小程序）
+            <Github className="w-4 h-4" /> 改动如何同步到前台（H5 + 小程序）
           </h3>
           <ol className="list-decimal list-inside text-sm text-emerald-800 space-y-1.5">
-            <li>这里「保存」会先写到 <span className="font-semibold">浏览器 localStorage</span>（刷新不丢，但只有你自己能看到）</li>
-            <li>准备上线时，点本页右上角 <span className="font-semibold">「下载 courses.json」</span> 拿到完整 JSON</li>
-            <li>覆盖 <code className="bg-white px-1 rounded border border-emerald-200">client-web/public/data/courses.json</code> 的内容</li>
-            <li>再跑一次 <code className="bg-white px-1 rounded border border-emerald-200">node scripts/merge-dist.js</code> + Vercel 重新部署 → 前台立即生效</li>
+            <li>改完直接点本页右上角 <span className="font-semibold">「同步到 GitHub」</span>：数据 commit 到仓库后 Vercel 自动部署，约 1 分钟生效</li>
+            <li>首次使用需到 <span className="font-semibold">「系统设置 → GitHub 同步」</span> 填管理员口令，并确认 Vercel 已配置 GITHUB_TOKEN</li>
+            <li>「保存」只写 <span className="font-semibold">浏览器 localStorage</span>（刷新不丢，但只有你自己能看到），同步后别人才看得到</li>
+            <li>未配置 GitHub 时仍可走老办法：<span className="font-semibold">「下载 courses.json」</span> → 覆盖 <code className="bg-white px-1 rounded border border-emerald-200">client-web/public/data/courses.json</code> → 重新部署</li>
           </ol>
         </div>
       </div>
